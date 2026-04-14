@@ -1,0 +1,45 @@
+// src/hooks/useComments.ts
+import { useState, useEffect, useCallback } from 'react'
+import type { GDeskComment } from '@/types'
+
+export function useComments(ticketId: string) {
+  const [comments, setComments] = useState<GDeskComment[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchComments = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/clickup/tickets/${ticketId}/comments`)
+      if (!res.ok) throw new Error('Failed to fetch comments')
+      const data = await res.json()
+      setComments(
+        data.comments.map((c: GDeskComment & { createdAt: string }) => ({
+          ...c,
+          createdAt: new Date(c.createdAt),
+        }))
+      )
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setLoading(false)
+    }
+  }, [ticketId])
+
+  useEffect(() => {
+    fetchComments()
+  }, [fetchComments])
+
+  async function addComment(content: string) {
+    const res = await fetch(`/api/clickup/tickets/${ticketId}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content }),
+    })
+    if (!res.ok) throw new Error('Failed to add comment')
+    await fetchComments()
+  }
+
+  return { comments, loading, error, addComment }
+}
