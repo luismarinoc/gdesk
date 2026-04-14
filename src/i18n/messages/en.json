@@ -1,0 +1,92 @@
+{
+  "nav": {
+    "tickets": "Tickets",
+    "settings": "Settings",
+    "users": "Users",
+    "logout": "Logout"
+  },
+  "auth": {
+    "login": "Sign in",
+    "register": "Sign up",
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full name",
+    "loginTitle": "Sign in to GDesk",
+    "registerTitle": "Create a GDesk account",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "loginError": "Invalid credentials",
+    "registerError": "Registration error"
+  },
+  "tickets": {
+    "title": "Tickets",
+    "new": "New ticket",
+    "number": "#",
+    "titleCol": "Title",
+    "status": "Status",
+    "priority": "Priority",
+    "assignedTo": "Assigned to",
+    "date": "Date",
+    "actions": "Actions",
+    "filterByStatus": "Filter by status",
+    "filterByPriority": "Filter by priority",
+    "search": "Search tickets...",
+    "perPage": "Per page",
+    "statuses": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "priorities": {
+      "urgent": "Urgent",
+      "high": "High",
+      "normal": "Normal",
+      "low": "Low"
+    },
+    "form": {
+      "titleLabel": "Title",
+      "titlePlaceholder": "Describe the issue...",
+      "descriptionLabel": "Description",
+      "priorityLabel": "Priority",
+      "submit": "Create ticket",
+      "cancel": "Cancel"
+    },
+    "detail": {
+      "comments": "Comments",
+      "attachments": "Attachments",
+      "addComment": "Add comment",
+      "submit": "Submit"
+    }
+  },
+  "attachments": {
+    "dropzone": "Drop files here or click to select",
+    "maxSize": "Max 10 MB per file",
+    "download": "Download",
+    "uploading": "Uploading..."
+  },
+  "users": {
+    "title": "Users",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "roles": {
+      "admin": "Administrator",
+      "agent": "Agent",
+      "client": "Client"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "profile": "Profile",
+    "save": "Save"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "noResults": "No results",
+    "confirm": "Confirm",
+    "cancel": "Cancel"
+  }
+}

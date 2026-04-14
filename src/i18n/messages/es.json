@@ -1,0 +1,92 @@
+{
+  "nav": {
+    "tickets": "Tickets",
+    "settings": "Configuración",
+    "users": "Usuarios",
+    "logout": "Cerrar sesión"
+  },
+  "auth": {
+    "login": "Iniciar sesión",
+    "register": "Registrarse",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "fullName": "Nombre completo",
+    "loginTitle": "Iniciar sesión en GDesk",
+    "registerTitle": "Crear cuenta en GDesk",
+    "noAccount": "¿No tienes cuenta?",
+    "hasAccount": "¿Ya tienes cuenta?",
+    "loginError": "Credenciales inválidas",
+    "registerError": "Error al registrar"
+  },
+  "tickets": {
+    "title": "Tickets",
+    "new": "Nuevo ticket",
+    "number": "#",
+    "titleCol": "Título",
+    "status": "Estado",
+    "priority": "Prioridad",
+    "assignedTo": "Asignado a",
+    "date": "Fecha",
+    "actions": "Acciones",
+    "filterByStatus": "Filtrar por estado",
+    "filterByPriority": "Filtrar por prioridad",
+    "search": "Buscar tickets...",
+    "perPage": "Por página",
+    "statuses": {
+      "open": "Abierto",
+      "in_progress": "En progreso",
+      "resolved": "Resuelto",
+      "closed": "Cerrado"
+    },
+    "priorities": {
+      "urgent": "Urgente",
+      "high": "Alto",
+      "normal": "Normal",
+      "low": "Bajo"
+    },
+    "form": {
+      "titleLabel": "Título",
+      "titlePlaceholder": "Describe el problema...",
+      "descriptionLabel": "Descripción",
+      "priorityLabel": "Prioridad",
+      "submit": "Crear ticket",
+      "cancel": "Cancelar"
+    },
+    "detail": {
+      "comments": "Comentarios",
+      "attachments": "Archivos adjuntos",
+      "addComment": "Agregar comentario",
+      "submit": "Enviar"
+    }
+  },
+  "attachments": {
+    "dropzone": "Arrastra archivos aquí o haz clic para seleccionar",
+    "maxSize": "Máx. 10 MB por archivo",
+    "download": "Descargar",
+    "uploading": "Subiendo..."
+  },
+  "users": {
+    "title": "Usuarios",
+    "name": "Nombre",
+    "email": "Correo",
+    "role": "Rol",
+    "roles": {
+      "admin": "Administrador",
+      "agent": "Agente",
+      "client": "Cliente"
+    }
+  },
+  "settings": {
+    "title": "Configuración",
+    "language": "Idioma",
+    "profile": "Perfil",
+    "save": "Guardar"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Ocurrió un error",
+    "noResults": "Sin resultados",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar"
+  }
+}
