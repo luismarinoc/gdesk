@@ -32,13 +32,18 @@ export function useComments(ticketId: string) {
   }, [fetchComments])
 
   async function addComment(content: string) {
-    const res = await fetch(`/api/clickup/tickets/${ticketId}/comments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content }),
-    })
-    if (!res.ok) throw new Error('Failed to add comment')
-    await fetchComments()
+    try {
+      const res = await fetch(`/api/clickup/tickets/${ticketId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      })
+      if (!res.ok) throw new Error('Failed to add comment')
+      await fetchComments()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+      throw err
+    }
   }
 
   return { comments, loading, error, addComment }

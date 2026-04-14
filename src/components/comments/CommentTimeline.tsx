@@ -23,9 +23,9 @@ export function CommentTimeline({ ticketId }: { ticketId: string }) {
       ) : (
         <div className="space-y-4">
           {comments.map(c => <CommentItem key={c.id} comment={c} />)}
-          {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
       )}
+      {error && <p className="text-sm text-red-500">{error}</p>}
       <CommentEditor onSubmit={addComment} />
     </div>
   )
