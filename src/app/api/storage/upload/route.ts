@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 
   const formData = await req.formData()
   const file = formData.get('file') as File | null
-  const bucket = (formData.get('bucket') as string) || 'ticket-attachments'
+  const bucket = 'ticket-attachments'
 
   if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
   if (!ALLOWED_TYPES.includes(file.type)) {
