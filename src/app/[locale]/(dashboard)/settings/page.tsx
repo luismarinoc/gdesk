@@ -60,7 +60,7 @@ export default function SettingsPage() {
         <CardHeader><CardTitle>{t('profile')}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="fullName">Nombre completo</Label>
+            <Label htmlFor="fullName">{t('fullName')}</Label>
             <Input
               id="fullName"
               value={fullName}
@@ -71,7 +71,7 @@ export default function SettingsPage() {
             <Button onClick={handleSave} disabled={saving}>
               {saving ? '...' : t('save')}
             </Button>
-            {saved && <span className="text-sm text-green-600">Guardado</span>}
+            {saved && <span className="text-sm text-green-600">{t('saved')}</span>}
           </div>
         </CardContent>
       </Card>

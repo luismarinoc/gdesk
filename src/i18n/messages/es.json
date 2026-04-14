@@ -80,7 +80,9 @@
     "title": "Configuración",
     "language": "Idioma",
     "profile": "Perfil",
-    "save": "Guardar"
+    "save": "Guardar",
+    "fullName": "Nombre completo",
+    "saved": "Guardado"
   },
   "common": {
     "loading": "Cargando...",
