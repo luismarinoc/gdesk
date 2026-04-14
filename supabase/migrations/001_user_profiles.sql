@@ -23,10 +23,7 @@ CREATE POLICY "Users can update own profile"
 CREATE POLICY "Admins can view all profiles"
   ON user_profiles FOR SELECT
   USING (
-    EXISTS (
-      SELECT 1 FROM user_profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    )
+    (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
   );
 
 -- Auto-create profile on user signup
@@ -37,7 +34,7 @@ BEGIN
   VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'full_name', ''));
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
