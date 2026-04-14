@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { clickupStatusToGDesk, clickupPriorityToGDesk, mapClickupTaskToTicket } from '@/lib/clickup/transformers'
+import { clickupStatusToGDesk, clickupPriorityToGDesk, mapClickupTaskToTicket, mapClickupCommentToGDesk } from '@/lib/clickup/transformers'
 
 describe('clickupStatusToGDesk', () => {
   it('maps "open" to open', () => {
@@ -59,5 +59,33 @@ describe('mapClickupTaskToTicket', () => {
     expect(result.priority).toBe('normal')
     expect(result.assignedTo).toBe('bob')
     expect(result.createdBy).toBe('alice')
+  })
+})
+
+describe('mapClickupCommentToGDesk', () => {
+  it('maps a ClickUp comment to GDeskComment shape', () => {
+    const comment = {
+      id: 'comment1',
+      user: { username: 'alice' },
+      comment_text: '<p>Hello world</p>',
+      date: '1700000000000',
+    }
+    const result = mapClickupCommentToGDesk(comment, 'ticket123')
+    expect(result.id).toBe('comment1')
+    expect(result.ticketId).toBe('ticket123')
+    expect(result.author).toBe('alice')
+    expect(result.content).toBe('<p>Hello world</p>')
+    expect(result.createdAt).toBeInstanceOf(Date)
+    expect(result.attachments).toEqual([])
+  })
+
+  it('handles missing user gracefully', () => {
+    const comment = {
+      id: 'comment2',
+      comment_text: 'no user',
+      date: '1700000000000',
+    }
+    const result = mapClickupCommentToGDesk(comment, 'ticket456')
+    expect(result.author).toBe('')
   })
 })
