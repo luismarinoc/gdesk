@@ -22,7 +22,7 @@ export function useTickets() {
         }))
       )
     } catch (err) {
-      setError(String(err))
+      setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
       setLoading(false)
     }

@@ -26,6 +26,7 @@ interface TicketsTableProps {
 
 export function TicketsTable({ tickets, loading }: TicketsTableProps) {
   const t = useTranslations('tickets')
+  const tc = useTranslations('common')
   const router = useRouter()
   const params = useParams()
   const locale = params.locale as string
@@ -159,7 +160,7 @@ export function TicketsTable({ tickets, loading }: TicketsTableProps) {
             {table.getRowModel().rows.length === 0 && (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-8 text-center text-gray-400">
-                  {t('search')}
+                  {tc('noResults')}
                 </td>
               </tr>
             )}
