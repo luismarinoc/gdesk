@@ -1,20 +1,16 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
   getSortedRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   flexRender,
   type ColumnDef,
 } from '@tanstack/react-table'
 import { useTranslations } from 'next-intl'
-import { useRouter, useParams } from 'next/navigation'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Button } from '@/components/ui/button'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TicketStatusBadge, TicketPriorityBadge } from './TicketStatusBadge'
 import type { GDeskTicket } from '@/types'
@@ -22,28 +18,35 @@ import type { GDeskTicket } from '@/types'
 interface TicketsTableProps {
   tickets: GDeskTicket[]
   loading: boolean
+  monthFilter?: string
 }
 
-export function TicketsTable({ tickets, loading }: TicketsTableProps) {
+export function TicketsTable({ tickets, loading, monthFilter = 'all' }: TicketsTableProps) {
   const t = useTranslations('tickets')
   const tc = useTranslations('common')
   const router = useRouter()
   const params = useParams()
   const locale = params.locale as string
-  const [globalFilter, setGlobalFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [priorityFilter, setPriorityFilter] = useState<string>('all')
+  const searchParams = useSearchParams()
+  const q = searchParams.get('q')?.toLowerCase() ?? ''
 
   const filtered = useMemo(() => {
     return tickets
-      .filter(t => statusFilter === 'all' || t.status === statusFilter)
-      .filter(t => priorityFilter === 'all' || t.priority === priorityFilter)
+      .filter(t => {
+        if (monthFilter === 'all') return true
+        const d = new Date(t.createdAt)
+        const v = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        return v === monthFilter
+      })
       .filter(t =>
-        !globalFilter ||
-        t.title.toLowerCase().includes(globalFilter.toLowerCase()) ||
-        t.ticketNumber.toLowerCase().includes(globalFilter.toLowerCase())
+        !q ||
+        t.title.toLowerCase().includes(q) ||
+        t.ticketNumber.toLowerCase().includes(q) ||
+        (t.assignedTo ?? '').toLowerCase().includes(q) ||
+        t.priority.toLowerCase().includes(q) ||
+        t.status.toLowerCase().includes(q)
       )
-  }, [tickets, statusFilter, priorityFilter, globalFilter])
+  }, [tickets, monthFilter, q])
 
   const columns = useMemo<ColumnDef<GDeskTicket>[]>(() => [
     { accessorKey: 'ticketNumber', header: t('number'), size: 80 },
@@ -66,7 +69,7 @@ export function TicketsTable({ tickets, loading }: TicketsTableProps) {
     {
       accessorKey: 'createdAt',
       header: t('date'),
-      cell: ({ getValue }) => (getValue<Date>()).toLocaleDateString(),
+      cell: ({ getValue }) => new Date(getValue<Date>()).toLocaleDateString('es'),
     },
   ], [t])
 
@@ -75,9 +78,7 @@ export function TicketsTable({ tickets, loading }: TicketsTableProps) {
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    initialState: { pagination: { pageSize: 20 } },
   })
 
   if (loading) {
@@ -92,44 +93,15 @@ export function TicketsTable({ tickets, loading }: TicketsTableProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-3 flex-wrap">
-        <Input
-          placeholder={t('search')}
-          value={globalFilter}
-          onChange={e => setGlobalFilter(e.target.value)}
-          className="max-w-xs"
-        />
-        <Select value={statusFilter} onValueChange={v => setStatusFilter(v ?? 'all')}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder={t('filterByStatus')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('filterByStatus')}</SelectItem>
-            <SelectItem value="open">{t('statuses.open')}</SelectItem>
-            <SelectItem value="in_progress">{t('statuses.in_progress')}</SelectItem>
-            <SelectItem value="resolved">{t('statuses.resolved')}</SelectItem>
-            <SelectItem value="closed">{t('statuses.closed')}</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={priorityFilter} onValueChange={v => setPriorityFilter(v ?? 'all')}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder={t('filterByPriority')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('filterByPriority')}</SelectItem>
-            <SelectItem value="urgent">{t('priorities.urgent')}</SelectItem>
-            <SelectItem value="high">{t('priorities.high')}</SelectItem>
-            <SelectItem value="normal">{t('priorities.normal')}</SelectItem>
-            <SelectItem value="low">{t('priorities.low')}</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex items-center justify-end">
+        <span className="text-xs text-gray-400">{filtered.length} tickets</span>
       </div>
 
-      <div className="rounded-md border bg-white overflow-x-auto">
+      <div className="rounded-md border bg-white overflow-auto" style={{ maxHeight: 'calc(100vh - 220px)' }}>
         <table className="w-full text-sm">
           <thead>
             {table.getHeaderGroups().map(hg => (
-              <tr key={hg.id} className="border-b bg-gray-50">
+              <tr key={hg.id} className="border-b bg-gray-50 sticky top-0 z-10">
                 {hg.headers.map(header => (
                   <th
                     key={header.id}
@@ -168,42 +140,6 @@ export function TicketsTable({ tickets, loading }: TicketsTableProps) {
         </table>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Prev
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
-        <span className="text-sm text-gray-500">
-          {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
-        </span>
-        <Select
-          value={String(table.getState().pagination.pageSize)}
-          onValueChange={v => table.setPageSize(Number(v ?? 20))}
-        >
-          <SelectTrigger className="w-24">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {[20, 50, 100].map(size => (
-              <SelectItem key={size} value={String(size)}>{size}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
     </div>
   )
 }

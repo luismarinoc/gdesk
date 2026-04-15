@@ -3,7 +3,20 @@
     "tickets": "Tickets",
     "settings": "Configuración",
     "users": "Usuarios",
-    "logout": "Cerrar sesión"
+    "logout": "Cerrar sesión",
+    "dashboard": "Dashboard",
+    "allTickets": "Todos los tickets",
+    "newTicket": "Nuevo ticket",
+    "reports": "Reportes"
+  },
+  "dashboard": {
+    "welcome": "¡Bienvenido",
+    "totalTickets": "Tickets Totales",
+    "openTickets": "Abiertos",
+    "resolvedTickets": "Resueltos",
+    "inProgress": "En Progreso",
+    "recentTickets": "Tickets Recientes",
+    "viewAll": "Ver todos"
   },
   "auth": {
     "login": "Iniciar sesión",
@@ -45,11 +58,36 @@
       "low": "Bajo"
     },
     "form": {
-      "titleLabel": "Título",
-      "titlePlaceholder": "Describe el problema...",
-      "descriptionLabel": "Descripción",
+      "typeLabel": "Tipo",
+      "typePlaceholder": "Seleccionar opción...",
+      "types": {
+        "bug": "Error / Bug",
+        "consulta": "Consulta",
+        "cambio": "Solicitud de cambio",
+        "acceso": "Acceso / Permisos",
+        "otro": "Otro"
+      },
+      "titleLabel": "Resuma el problema",
+      "titlePlaceholder": "Resuma el problema",
+      "descriptionLabel": "Describe el problema",
+      "descriptionPlaceholder": "Descripción",
       "priorityLabel": "Prioridad",
-      "submit": "Crear ticket",
+      "priorityPlaceholder": "Selecciona la prioridad",
+      "moduleLabel": "Módulo",
+      "modulePlaceholder": "Seleccionar opción...",
+      "modules": {
+        "sap_fi": "SAP FI - Finanzas",
+        "sap_co": "SAP CO - Controlling",
+        "sap_sd": "SAP SD - Ventas",
+        "sap_mm": "SAP MM - Materiales",
+        "sap_pp": "SAP PP - Producción",
+        "sap_hr": "SAP HR - Recursos Humanos",
+        "sap_basis": "SAP BASIS",
+        "sap_abap": "SAP ABAP",
+        "otro": "Otro"
+      },
+      "attachmentLabel": "Adjunto",
+      "submit": "Enviar",
       "cancel": "Cancelar"
     },
     "detail": {

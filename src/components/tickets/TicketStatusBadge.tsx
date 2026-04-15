@@ -1,25 +1,29 @@
-// src/components/tickets/TicketStatusBadge.tsx
 import { Badge } from '@/components/ui/badge'
 import type { GDeskTicket } from '@/types'
-
-const STATUS_STYLES: Record<GDeskTicket['status'], string> = {
-  open: 'bg-blue-100 text-blue-800',
-  in_progress: 'bg-yellow-100 text-yellow-800',
-  resolved: 'bg-green-100 text-green-800',
-  closed: 'bg-gray-100 text-gray-700',
-}
+import { STATUS_MAP } from '@/types'
 
 const PRIORITY_STYLES: Record<GDeskTicket['priority'], string> = {
   urgent: 'bg-red-100 text-red-800',
-  high: 'bg-orange-100 text-orange-800',
+  high:   'bg-orange-100 text-orange-800',
   normal: 'bg-blue-50 text-blue-700',
-  low: 'bg-gray-100 text-gray-600',
+  low:    'bg-gray-100 text-gray-600',
+}
+
+const PRIORITY_LABELS: Record<GDeskTicket['priority'], string> = {
+  urgent: 'Urgente',
+  high:   'Alta',
+  normal: 'Normal',
+  low:    'Baja',
 }
 
 export function TicketStatusBadge({ status }: { status: GDeskTicket['status'] }) {
+  const cfg = STATUS_MAP[status]
   return (
-    <Badge className={STATUS_STYLES[status]} variant="outline">
-      {status.replace('_', ' ')}
+    <Badge
+      variant="outline"
+      style={{ backgroundColor: cfg?.color + '20', color: cfg?.color, borderColor: cfg?.color + '40' }}
+    >
+      {cfg?.label ?? status}
     </Badge>
   )
 }
@@ -27,7 +31,7 @@ export function TicketStatusBadge({ status }: { status: GDeskTicket['status'] })
 export function TicketPriorityBadge({ priority }: { priority: GDeskTicket['priority'] }) {
   return (
     <Badge className={PRIORITY_STYLES[priority]} variant="outline">
-      {priority}
+      {PRIORITY_LABELS[priority] ?? priority}
     </Badge>
   )
 }

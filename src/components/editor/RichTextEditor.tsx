@@ -14,12 +14,15 @@ interface RichTextEditorProps {
   content?: string
   placeholder?: string
   onChange?: (html: string) => void
+  hideToolbar?: boolean
+  minHeight?: string
 }
 
-export function RichTextEditor({ content = '', placeholder, onChange }: RichTextEditorProps) {
+export function RichTextEditor({ content = '', placeholder, onChange, hideToolbar = false, minHeight = '120px' }: RichTextEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit,
       UnderlineExt,
@@ -56,10 +59,11 @@ export function RichTextEditor({ content = '', placeholder, onChange }: RichText
 
   return (
     <div className="border rounded-md overflow-hidden">
-      <EditorToolbar editor={editor} onImageUpload={handleImageUpload} />
+      {!hideToolbar && <EditorToolbar editor={editor} onImageUpload={handleImageUpload} />}
       <EditorContent
         editor={editor}
-        className="prose prose-sm max-w-none p-3 min-h-[120px] focus:outline-none"
+        className="prose prose-sm max-w-none p-3 focus:outline-none"
+        style={{ minHeight }}
       />
       <input
         ref={fileInputRef}

@@ -2,11 +2,13 @@
 'use client'
 
 import { useState, useEffect, use } from 'react'
+import { useRouter } from 'next/navigation'
 import { TicketDetail } from '@/components/tickets/TicketDetail'
 import type { GDeskTicket } from '@/types'
 
 export default function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const router = useRouter()
   const [ticket, setTicket] = useState<GDeskTicket | null>(null)
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
@@ -33,5 +35,19 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
   }, [id])
 
   if (fetchError) return <p className="text-red-500">{fetchError}</p>
-  return <TicketDetail ticket={ticket} loading={loading} />
+
+  return (
+    <div className="flex flex-col h-full gap-3">
+      <button
+        onClick={() => router.back()}
+        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#1B3A6B] transition-colors w-fit"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        Volver
+      </button>
+      <TicketDetail ticket={ticket} loading={loading} />
+    </div>
+  )
 }

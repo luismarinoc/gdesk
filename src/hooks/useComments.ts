@@ -6,6 +6,13 @@ export function useComments(ticketId: string) {
   const [comments, setComments] = useState<GDeskComment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [currentUserName, setCurrentUserName] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(r => r.json())
+      .then(data => setCurrentUserName(data.user?.fullName ?? null))
+  }, [])
 
   const fetchComments = useCallback(async () => {
     setLoading(true)
@@ -31,12 +38,12 @@ export function useComments(ticketId: string) {
     fetchComments()
   }, [fetchComments])
 
-  async function addComment(content: string) {
+  async function addComment(content: string, parentCommentId?: string) {
     try {
       const res = await fetch(`/api/clickup/tickets/${ticketId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, parentCommentId }),
       })
       if (!res.ok) throw new Error('Failed to add comment')
       await fetchComments()
@@ -46,5 +53,20 @@ export function useComments(ticketId: string) {
     }
   }
 
-  return { comments, loading, error, addComment }
+  async function deleteComment(commentId: string) {
+    try {
+      const res = await fetch(`/api/clickup/comments/${commentId}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        console.error('[deleteComment] error:', body)
+        throw new Error(body.error ?? 'Failed to delete comment')
+      }
+      setComments(prev => prev.filter(c => c.id !== commentId))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+      throw err
+    }
+  }
+
+  return { comments, loading, error, currentUserName, addComment, deleteComment }
 }

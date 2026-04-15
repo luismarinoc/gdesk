@@ -20,8 +20,22 @@ const STATUS_MAP: Record<string, string> = {
 }
 
 export async function listTickets(): Promise<GDeskTicket[]> {
-  const data = await clickupClient.get(`/list/${LIST_ID}/task?include_closed=true`)
-  return (data.tasks ?? []).map(mapClickupTaskToTicket)
+  const sixMonthsAgo = new Date()
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+  const since = sixMonthsAgo.getTime()
+
+  const all: GDeskTicket[] = []
+  let page = 0
+  while (true) {
+    const data = await clickupClient.get(
+      `/list/${LIST_ID}/task?include_closed=true&subtasks=true&date_created_gt=${since}&page=${page}`
+    )
+    const tasks = data.tasks ?? []
+    all.push(...tasks.map(mapClickupTaskToTicket))
+    if (data.last_page || tasks.length === 0) break
+    page++
+  }
+  return all
 }
 
 export async function getTicket(id: string): Promise<GDeskTicket> {
@@ -30,8 +44,10 @@ export async function getTicket(id: string): Promise<GDeskTicket> {
 }
 
 export async function createTicket(input: CreateTicketInput): Promise<GDeskTicket> {
+  const typeLabel = input.type ? `[${input.type.toUpperCase()}]` : ''
+  const moduleLabel = input.module ? ` [${input.module.toUpperCase()}]` : ''
   const data = await clickupClient.post(`/list/${LIST_ID}/task`, {
-    name: input.title,
+    name: `${typeLabel}${moduleLabel} ${input.title}`.trim(),
     description: input.description ?? '',
     priority: PRIORITY_MAP[input.priority ?? 'normal'],
     status: 'open',

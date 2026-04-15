@@ -18,7 +18,8 @@ async function clickupFetch(path: string, options: RequestInit = {}) {
     throw new Error(`ClickUp API error ${res.status}: ${text}`)
   }
 
-  return res.json()
+  const text = await res.text()
+  return text ? JSON.parse(text) : {}
 }
 
 export const clickupClient = {

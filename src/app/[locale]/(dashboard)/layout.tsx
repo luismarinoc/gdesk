@@ -1,9 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { Sidebar } from '@/components/layout/Sidebar'
-import { Header } from '@/components/layout/Header'
-import { NextIntlClientProvider } from 'next-intl'
-import { getMessages } from 'next-intl/server'
+import { DashboardShell } from '@/components/layout/DashboardShell'
 
 export default async function DashboardLayout({
   children,
@@ -26,19 +23,11 @@ export default async function DashboardLayout({
     .eq('id', user.id)
     .single()
 
-  const messages = await getMessages()
+  const fullName = profile?.full_name ?? user.email ?? ''
 
   return (
-    <NextIntlClientProvider messages={messages} locale={locale}>
-      <div className="flex min-h-screen">
-        <Sidebar locale={locale} userRole={profile?.role ?? 'client'} />
-        <div className="flex-1 flex flex-col">
-          <Header locale={locale} userFullName={profile?.full_name ?? user.email ?? ''} />
-          <main className="flex-1 p-6 bg-gray-50">
-            {children}
-          </main>
-        </div>
-      </div>
-    </NextIntlClientProvider>
+    <DashboardShell locale={locale} userFullName={fullName} userRole={profile?.role ?? 'client'}>
+      {children}
+    </DashboardShell>
   )
 }

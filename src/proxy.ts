@@ -7,7 +7,7 @@ const intlMiddleware = createIntlMiddleware(routing)
 
 const PUBLIC_PATHS = ['/login', '/register']
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Handle i18n routing first
@@ -38,7 +38,7 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }))
 
   if (!user && !isPublicPath) {
     const locale = pathname.split('/')[1] || 'es'
@@ -54,5 +54,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|css|js|woff2?|ttf|otf)).*)'],
 }
