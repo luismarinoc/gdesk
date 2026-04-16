@@ -32,6 +32,11 @@ function TicketsPageInner() {
           const saved = localStorage.getItem(ADMIN_LIST_KEY)
           if (saved) {
             setAdminList(JSON.parse(saved))
+          } else if (data.user?.clickupListId) {
+            // Usar la lista asignada en Supabase como default
+            const defaultList = { id: data.user.clickupListId, name: 'Mi lista' }
+            localStorage.setItem(ADMIN_LIST_KEY, JSON.stringify(defaultList))
+            setAdminList(defaultList)
           } else {
             setShowSelector(true)
           }
