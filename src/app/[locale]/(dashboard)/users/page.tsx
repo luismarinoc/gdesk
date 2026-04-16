@@ -89,7 +89,7 @@ export default function UsersPage({ params }: { params: Promise<{ locale: string
               <th className="px-4 py-3 text-left font-medium text-gray-600">Nombre</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Rol</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Lista ClickUp asignada</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Usuario ClickUp (agentes)</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">Usuario ClickUp</th>
             </tr>
           </thead>
           <tbody>
@@ -97,13 +97,25 @@ export default function UsersPage({ params }: { params: Promise<{ locale: string
               <tr key={u.id} className="border-b hover:bg-gray-50 transition-colors">
                 <td className="px-4 py-3 font-medium text-gray-800">{u.full_name}</td>
                 <td className="px-4 py-3">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    u.role === 'admin' ? 'bg-purple-100 text-purple-700' :
-                    u.role === 'agent' ? 'bg-blue-100 text-blue-700' :
-                    'bg-gray-100 text-gray-600'
-                  }`}>
-                    {roleLabel(u.role)}
-                  </span>
+                  <select
+                    value={u.role}
+                    onChange={async e => {
+                      setSaving(u.id + '_role')
+                      await fetch(`/api/users/${u.id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ role: e.target.value }),
+                      })
+                      setUsers(prev => prev.map(x => x.id === u.id ? { ...x, role: e.target.value } : x))
+                      setSaving(null)
+                    }}
+                    disabled={saving === u.id + '_role'}
+                    className="text-sm border border-gray-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:border-[#1B3A6B] transition-colors"
+                  >
+                    <option value="admin">Admin</option>
+                    <option value="agent">Agente</option>
+                    <option value="client">Cliente</option>
+                  </select>
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
@@ -127,7 +139,7 @@ export default function UsersPage({ params }: { params: Promise<{ locale: string
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  {u.role === 'agent' ? (
+                  {u.role !== 'client' ? (
                     <div className="flex items-center gap-2">
                       <select
                         value={u.clickup_user_id ?? ''}
