@@ -53,11 +53,12 @@ export default function UsersPage({ params }: { params: Promise<{ locale: string
   }
 
   async function handleMemberChange(userId: string, clickupUserId: string) {
+    const member = members.find(m => m.id === clickupUserId) ?? null
     setSaving(userId + '_member')
     await fetch(`/api/users/${userId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clickup_user_id: clickupUserId || null }),
+      body: JSON.stringify({ clickup_user_id: clickupUserId || null, clickup_user_name: member?.name ?? null }),
     })
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, clickup_user_id: clickupUserId || null } : u))
     setSaving(null)

@@ -24,6 +24,7 @@ export async function PATCH(
   const update: Record<string, string | null> = {}
   if ('clickup_list_id' in body) update.clickup_list_id = body.clickup_list_id ?? null
   if ('clickup_user_id' in body) update.clickup_user_id = body.clickup_user_id ?? null
+  if ('clickup_user_name' in body) update.clickup_user_name = body.clickup_user_name ?? null
   if ('role' in body && ['admin', 'agent', 'client'].includes(body.role)) update.role = body.role
 
   const { error } = await serviceClient
