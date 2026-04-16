@@ -29,7 +29,7 @@ export default function LoginPage({ params }: { params: Promise<{ locale: string
       setLoading(false)
       return
     }
-    router.push(`/${locale}/tickets`)
+    router.push(`/${locale}/dashboard`)
     router.refresh()
   }
 
