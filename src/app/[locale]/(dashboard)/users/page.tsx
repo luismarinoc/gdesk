@@ -100,13 +100,19 @@ export default function UsersPage({ params }: { params: Promise<{ locale: string
                   <select
                     value={u.role}
                     onChange={async e => {
+                      const newRole = e.target.value
                       setSaving(u.id + '_role')
-                      await fetch(`/api/users/${u.id}`, {
+                      const res = await fetch(`/api/users/${u.id}`, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ role: e.target.value }),
+                        body: JSON.stringify({ role: newRole }),
                       })
-                      setUsers(prev => prev.map(x => x.id === u.id ? { ...x, role: e.target.value } : x))
+                      if (res.ok) {
+                        setUsers(prev => prev.map(x => x.id === u.id ? { ...x, role: newRole } : x))
+                      } else {
+                        const err = await res.json()
+                        alert('Error: ' + (err.error ?? res.status))
+                      }
                       setSaving(null)
                     }}
                     disabled={saving === u.id + '_role'}
