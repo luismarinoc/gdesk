@@ -8,15 +8,18 @@ type UserProfile = {
   full_name: string
   role: string
   clickup_list_id: string | null
+  clickup_user_id: string | null
 }
 
 type ClickUpList = { id: string; name: string }
+type ClickUpMember = { id: string; name: string; email: string }
 
 export default function UsersPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = use(params)
   const router = useRouter()
   const [users, setUsers] = useState<UserProfile[]>([])
   const [lists, setLists] = useState<ClickUpList[]>([])
+  const [members, setMembers] = useState<ClickUpMember[]>([])
   const [saving, setSaving] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -25,13 +28,15 @@ export default function UsersPage({ params }: { params: Promise<{ locale: string
       fetch('/api/auth/me').then(r => r.json()),
       fetch('/api/users').then(r => r.json()),
       fetch('/api/clickup/lists').then(r => r.json()),
-    ]).then(([me, usersData, listsData]) => {
+      fetch('/api/clickup/members').then(r => r.json()),
+    ]).then(([me, usersData, listsData, membersData]) => {
       if (me.user?.role !== 'admin') {
         router.push(`/${locale}/tickets`)
         return
       }
       setUsers(usersData.users ?? [])
       setLists(listsData.lists ?? [])
+      setMembers(membersData.members ?? [])
       setLoading(false)
     })
   }, [locale, router])
@@ -44,6 +49,17 @@ export default function UsersPage({ params }: { params: Promise<{ locale: string
       body: JSON.stringify({ clickup_list_id: listId || null }),
     })
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, clickup_list_id: listId || null } : u))
+    setSaving(null)
+  }
+
+  async function handleMemberChange(userId: string, clickupUserId: string) {
+    setSaving(userId + '_member')
+    await fetch(`/api/users/${userId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clickup_user_id: clickupUserId || null }),
+    })
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, clickup_user_id: clickupUserId || null } : u))
     setSaving(null)
   }
 
@@ -73,6 +89,7 @@ export default function UsersPage({ params }: { params: Promise<{ locale: string
               <th className="px-4 py-3 text-left font-medium text-gray-600">Nombre</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Rol</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Lista ClickUp asignada</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">Usuario ClickUp (agentes)</th>
             </tr>
           </thead>
           <tbody>
@@ -108,6 +125,31 @@ export default function UsersPage({ params }: { params: Promise<{ locale: string
                       </svg>
                     )}
                   </div>
+                </td>
+                <td className="px-4 py-3">
+                  {u.role === 'agent' ? (
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={u.clickup_user_id ?? ''}
+                        onChange={e => handleMemberChange(u.id, e.target.value)}
+                        disabled={saving === u.id + '_member'}
+                        className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:border-[#1B3A6B] transition-colors"
+                      >
+                        <option value="">— Sin asignar —</option>
+                        {members.map(m => (
+                          <option key={m.id} value={m.id}>{m.name}</option>
+                        ))}
+                      </select>
+                      {saving === u.id + '_member' && (
+                        <svg className="animate-spin w-4 h-4 text-[#1B3A6B]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                        </svg>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-300">—</span>
+                  )}
                 </td>
               </tr>
             ))}

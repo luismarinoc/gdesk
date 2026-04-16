@@ -21,9 +21,13 @@ export async function PATCH(
   const body = await req.json()
 
   const serviceClient = createServiceClient()
+  const update: Record<string, string | null> = {}
+  if ('clickup_list_id' in body) update.clickup_list_id = body.clickup_list_id ?? null
+  if ('clickup_user_id' in body) update.clickup_user_id = body.clickup_user_id ?? null
+
   const { error } = await serviceClient
     .from('user_profiles')
-    .update({ clickup_list_id: body.clickup_list_id ?? null })
+    .update(update)
     .eq('id', id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
