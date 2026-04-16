@@ -5,11 +5,13 @@ import { listTickets, createTicket } from '@/services/clickup-ticket.service'
 import { createTicketSchema } from '@/lib/validations/ticket.schema'
 import type { UserRole } from '@/lib/auth/permissions'
 
-const getCachedTickets = unstable_cache(
-  () => listTickets(),
-  ['clickup-tickets'],
-  { revalidate: 300, tags: ['clickup-tickets'] }
-)
+function getCachedTickets(listId: string) {
+  return unstable_cache(
+    () => listTickets(listId),
+    [`clickup-tickets-${listId}`],
+    { revalidate: 300, tags: ['clickup-tickets', `clickup-tickets-${listId}`] }
+  )()
+}
 
 async function requireAuth() {
   const supabase = await createClient()
@@ -17,22 +19,34 @@ async function requireAuth() {
   if (!user) return null
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('role')
+    .select('role, clickup_list_id')
     .eq('id', user.id)
     .single()
-  return { user, role: (profile?.role ?? 'client') as UserRole }
+  return {
+    user,
+    role: (profile?.role ?? 'client') as UserRole,
+    clickupListId: profile?.clickup_list_id ?? null,
+  }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const auth = await requireAuth()
   if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  // Admin puede pasar ?listId=xxx para filtrar por lista seleccionada
+  const queryListId = req.nextUrl.searchParams.get('listId')
+
+  if (auth.role !== 'admin' && !auth.clickupListId) {
+    return NextResponse.json({ error: 'NO_LIST_ASSIGNED' }, { status: 403 })
+  }
+
+  const listId = auth.role === 'admin'
+    ? (queryListId ?? process.env.CLICKUP_LIST_ID!)
+    : auth.clickupListId!
+
   try {
-    const tickets = await getCachedTickets()
-    const filtered = auth.role === 'client'
-      ? tickets.filter(t => t.createdBy === auth.user.email)
-      : tickets
-    return NextResponse.json({ tickets: filtered })
+    const tickets = await getCachedTickets(listId)
+    return NextResponse.json({ tickets })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }

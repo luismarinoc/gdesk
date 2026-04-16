@@ -3,7 +3,7 @@ import { mapClickupTaskToTicket } from '@/lib/clickup/transformers'
 import type { GDeskTicket } from '@/types'
 import type { CreateTicketInput, UpdateTicketInput } from '@/lib/validations/ticket.schema'
 
-const LIST_ID = process.env.CLICKUP_LIST_ID!
+const DEFAULT_LIST_ID = process.env.CLICKUP_LIST_ID!
 
 const PRIORITY_MAP: Record<string, number> = {
   urgent: 1,
@@ -19,7 +19,8 @@ const STATUS_MAP: Record<string, string> = {
   closed: 'closed',
 }
 
-export async function listTickets(): Promise<GDeskTicket[]> {
+export async function listTickets(listId?: string): Promise<GDeskTicket[]> {
+  const id = listId ?? DEFAULT_LIST_ID
   const sixMonthsAgo = new Date()
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
   const since = sixMonthsAgo.getTime()
@@ -28,7 +29,7 @@ export async function listTickets(): Promise<GDeskTicket[]> {
   let page = 0
   while (true) {
     const data = await clickupClient.get(
-      `/list/${LIST_ID}/task?include_closed=true&subtasks=true&date_created_gt=${since}&page=${page}`
+      `/list/${id}/task?include_closed=true&subtasks=true&date_created_gt=${since}&page=${page}`
     )
     const tasks = data.tasks ?? []
     all.push(...tasks.map(mapClickupTaskToTicket))

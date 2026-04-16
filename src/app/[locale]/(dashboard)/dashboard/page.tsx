@@ -4,11 +4,13 @@ import { unstable_cache } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { listTickets } from '@/services/clickup-ticket.service'
 
-const getCachedTickets = unstable_cache(
-  () => listTickets(),
-  ['clickup-tickets'],
-  { revalidate: 300, tags: ['clickup-tickets'] }
-)
+function getCachedTickets(listId: string) {
+  return unstable_cache(
+    () => listTickets(listId),
+    [`clickup-tickets-${listId}`],
+    { revalidate: 300, tags: ['clickup-tickets', `clickup-tickets-${listId}`] }
+  )()
+}
 import type { GDeskTicket } from '@/types'
 import { SatisfactionDonut, TicketsBarChart } from '@/components/dashboard/DashboardCharts'
 import { MonthSelect } from '@/components/shared/MonthSelect'
@@ -27,18 +29,16 @@ export default async function DashboardPage({
   const { data: { user } } = await supabase.auth.getUser()
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('full_name, role')
+    .select('full_name, role, clickup_list_id')
     .eq('id', user!.id)
     .single()
 
   const firstName = (profile?.full_name ?? user?.email ?? '').split(' ')[0]
+  const listId = profile?.clickup_list_id ?? process.env.CLICKUP_LIST_ID!
 
   let allTickets: GDeskTicket[] = []
   try {
-    const fetched = await getCachedTickets()
-    allTickets = profile?.role === 'client'
-      ? fetched.filter((t) => t.createdBy === user?.email)
-      : fetched
+    allTickets = await getCachedTickets(listId)
   } catch {
     // silently fail
   }
