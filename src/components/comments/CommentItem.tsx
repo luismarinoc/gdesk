@@ -24,11 +24,22 @@ function formatDate(date: Date) {
   })
 }
 
-// Si el contenido empieza con "Nombre: texto", extrae el nombre y el resto
+// Extrae texto plano del HTML para detectar el prefijo "Nombre: "
+function htmlToText(html: string): string {
+  return html.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim()
+}
+
+// Si el contenido empieza con "Nombre: texto", extrae el nombre y limpia el HTML
 function parseAuthorPrefix(content: string): { author: string | null; body: string } {
-  const match = content.match(/^([^:<\n]{2,40}):\s+([\s\S]+)$/)
-  if (match) return { author: match[1].trim(), body: match[2].trim() }
-  return { author: null, body: content }
+  const plain = htmlToText(content)
+  const match = plain.match(/^([^:<\n]{2,40}):\s+([\s\S]+)$/)
+  if (!match) return { author: null, body: content }
+  const author = match[1].trim()
+  const bodyText = match[2].trim()
+  // Reconstruir el HTML sin el prefijo
+  const prefixPattern = new RegExp(author.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ':\\s*')
+  const body = content.replace(prefixPattern, '')
+  return { author, body }
 }
 
 export function CommentItem({
