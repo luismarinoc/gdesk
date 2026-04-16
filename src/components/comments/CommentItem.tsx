@@ -24,6 +24,13 @@ function formatDate(date: Date) {
   })
 }
 
+// Si el contenido empieza con "Nombre: texto", extrae el nombre y el resto
+function parseAuthorPrefix(content: string): { author: string | null; body: string } {
+  const match = content.match(/^([^:<\n]{2,40}):\s+([\s\S]+)$/)
+  if (match) return { author: match[1].trim(), body: match[2].trim() }
+  return { author: null, body: content }
+}
+
 export function CommentItem({
   comment,
   onReply,
@@ -38,8 +45,13 @@ export function CommentItem({
   const [confirming, setConfirming] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(false)
-  const initials = getInitials(comment.author)
-  const bg = avatarColor(comment.author)
+
+  const { author: prefixAuthor, body: cleanContent } = parseAuthorPrefix(comment.content ?? '')
+  const displayAuthor = prefixAuthor ?? comment.author
+  const displayContent = prefixAuthor ? cleanContent : (comment.content ?? '')
+
+  const initials = getInitials(displayAuthor)
+  const bg = avatarColor(displayAuthor)
 
   async function handleDelete() {
     if (!confirming) { setConfirming(true); return }
@@ -67,7 +79,7 @@ export function CommentItem({
           {initials}
         </div>
         <div className="flex items-baseline gap-2 min-w-0 flex-1">
-          <span className="text-sm font-semibold text-gray-800 truncate">{comment.author}</span>
+          <span className="text-sm font-semibold text-gray-800 truncate">{displayAuthor}</span>
           <span className="text-xs text-gray-400 whitespace-nowrap">{formatDate(comment.createdAt)}</span>
         </div>
         {isOwner && (
@@ -113,7 +125,7 @@ export function CommentItem({
 
       {/* Content */}
       <div className="px-4 pb-2 text-sm text-gray-700">
-        <RichTextRenderer html={comment.content} />
+        <RichTextRenderer html={displayContent} />
       </div>
 
       {/* Footer actions */}
@@ -140,9 +152,9 @@ export function CommentItem({
               <span>{comment.replyCount} respuesta{comment.replyCount !== 1 ? 's' : ''}</span>
               <div
                 className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0"
-                style={{ backgroundColor: avatarColor(comment.author) }}
+                style={{ backgroundColor: bg }}
               >
-                {getInitials(comment.author)}
+                {initials}
               </div>
             </button>
           )}
