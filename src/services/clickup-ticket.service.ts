@@ -47,7 +47,7 @@ export async function getTicket(id: string): Promise<GDeskTicket> {
 export async function createTicket(input: CreateTicketInput): Promise<GDeskTicket> {
   const typeLabel = input.type ? `[${input.type.toUpperCase()}]` : ''
   const moduleLabel = input.module ? ` [${input.module.toUpperCase()}]` : ''
-  const data = await clickupClient.post(`/list/${LIST_ID}/task`, {
+  const data = await clickupClient.post(`/list/${DEFAULT_LIST_ID}/task`, {
     name: `${typeLabel}${moduleLabel} ${input.title}`.trim(),
     description: input.description ?? '',
     priority: PRIORITY_MAP[input.priority ?? 'normal'],
