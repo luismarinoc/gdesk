@@ -290,17 +290,17 @@ export default async function DashboardPage({
           )}
         </div>
 
-        <div className="bg-white rounded-xl card-shadow p-4" style={{ height: '320px' }}>
+        <div className="bg-white rounded-xl card-shadow p-4 md:h-[320px]">
           <div className="mb-1">
             <h2 className="text-sm font-semibold text-gray-700">Comparación de Tickets</h2>
             <p className="text-xs text-gray-400 mb-2">Distribución por estado — últimos 6 meses</p>
-            <div className="flex items-center gap-3 text-xs text-gray-400 flex-wrap">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block" style={{background:'#6366f1'}} />Creados</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block" style={{background:'#787486'}} />Backlog</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block" style={{background:'#e11d48'}} />Listo p/Trabajar</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block" style={{background:'#4194f0'}} />En Progreso</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block" style={{background:'#f97316'}} />Supervisión</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block" style={{background:'#22c55e'}} />Cerrados</span>
+            <div className="grid grid-cols-3 gap-x-3 gap-y-1 text-xs text-gray-400 mb-2">
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block flex-shrink-0" style={{background:'#6366f1'}} />Creados</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block flex-shrink-0" style={{background:'#787486'}} />Backlog</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block flex-shrink-0" style={{background:'#e11d48'}} />Listo p/T.</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block flex-shrink-0" style={{background:'#4194f0'}} />En Progreso</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block flex-shrink-0" style={{background:'#f97316'}} />Supervisión</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block flex-shrink-0" style={{background:'#22c55e'}} />Cerrados</span>
             </div>
           </div>
           <TicketsBarChart data={barData} />
