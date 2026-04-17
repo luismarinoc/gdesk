@@ -13,9 +13,11 @@ interface SidebarProps {
   locale: string
   userRole: string
   userFullName: string
+  permissions: string[]
 }
 
-export function Sidebar({ locale, userRole, userFullName }: SidebarProps) {
+export function Sidebar({ locale, userRole, userFullName, permissions }: SidebarProps) {
+  const can = (module: string) => userRole === 'admin' || permissions.includes(module)
   const pathname = usePathname()
   const [dashOpen, setDashOpen] = useState(true)
 
@@ -114,8 +116,8 @@ export function Sidebar({ locale, userRole, userFullName }: SidebarProps) {
         </p>
 
         {/* Dashboard expandible */}
-        {navItem(`/${locale}/dashboard`, <LayoutDashboard className="w-4 h-4" />, 'Dashboard', true, dashOpen, () => setDashOpen(v => !v))}
-        {dashOpen && (
+        {can('dashboard') && navItem(`/${locale}/dashboard`, <LayoutDashboard className="w-4 h-4" />, 'Dashboard', true, dashOpen, () => setDashOpen(v => !v))}
+        {can('dashboard') && dashOpen && (
           <div className="ml-6 border-l border-gray-100 pl-3 space-y-0.5 mb-1">
             {subItem(`/${locale}/dashboard`, 'Overview')}
             {subItem(`/${locale}/kanban`, 'Kanban')}
@@ -125,10 +127,10 @@ export function Sidebar({ locale, userRole, userFullName }: SidebarProps) {
         )}
 
         {/* Gestión de Tickets */}
-        {navItem(`/${locale}/tickets`, <TicketCheck className="w-4 h-4" />, 'Gestión de Tickets')}
+        {can('tickets') && navItem(`/${locale}/tickets`, <TicketCheck className="w-4 h-4" />, 'Gestión de Tickets')}
 
         {/* Nueva Solicitud */}
-        {navItem(`/${locale}/tickets/new`, <Ticket className="w-4 h-4" />, 'Nueva Solicitud')}
+        {can('tickets') && navItem(`/${locale}/tickets/new`, <Ticket className="w-4 h-4" />, 'Nueva Solicitud')}
 
         {/* Usuarios (admin) */}
         {userRole === 'admin' && navItem(`/${locale}/users`, <Users className="w-4 h-4" />, 'Usuarios')}

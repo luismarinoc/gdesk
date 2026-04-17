@@ -19,12 +19,13 @@ export default async function DashboardLayout({
 
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('full_name, role, clickup_list_id')
+    .select('full_name, role, clickup_list_id, permissions')
     .eq('id', user.id)
     .single()
 
   const fullName = profile?.full_name ?? user.email ?? ''
   const role = profile?.role ?? 'client'
+  const permissions: string[] = role === 'admin' ? ['dashboard', 'tickets'] : (profile?.permissions ?? ['tickets'])
   const noListAssigned = role !== 'admin' && !profile?.clickup_list_id
 
   if (noListAssigned) {
@@ -52,7 +53,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <DashboardShell locale={locale} userFullName={fullName} userRole={role}>
+    <DashboardShell locale={locale} userFullName={fullName} userRole={role} permissions={permissions}>
       {children}
     </DashboardShell>
   )

@@ -26,6 +26,7 @@ export async function PATCH(
   if ('clickup_user_id' in body) update.clickup_user_id = body.clickup_user_id ?? null
   if ('clickup_user_name' in body) update.clickup_user_name = body.clickup_user_name ?? null
   if ('role' in body && ['admin', 'agent', 'client'].includes(body.role)) update.role = body.role
+  if ('permissions' in body && Array.isArray(body.permissions)) update.permissions = body.permissions
 
   const { error } = await serviceClient
     .from('user_profiles')

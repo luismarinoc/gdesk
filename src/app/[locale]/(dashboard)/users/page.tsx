@@ -3,12 +3,18 @@
 import { use, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
+const MODULES = [
+  { key: 'dashboard', label: 'Dashboard' },
+  { key: 'tickets', label: 'Gestión de Tickets' },
+]
+
 type UserProfile = {
   id: string
   full_name: string
   role: string
   clickup_list_id: string | null
   clickup_user_id: string | null
+  permissions: string[]
 }
 
 type ClickUpList = { id: string; name: string }
@@ -34,7 +40,7 @@ export default function UsersPage({ params }: { params: Promise<{ locale: string
         router.push(`/${locale}/tickets`)
         return
       }
-      setUsers(usersData.users ?? [])
+      setUsers((usersData.users ?? []).map((u: UserProfile) => ({ ...u, permissions: u.permissions ?? [] })))
       setLists(listsData.lists ?? [])
       setMembers(membersData.members ?? [])
       setLoading(false)
@@ -50,6 +56,20 @@ export default function UsersPage({ params }: { params: Promise<{ locale: string
     })
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, clickup_list_id: listId || null } : u))
     setSaving(null)
+  }
+
+  async function handlePermissionToggle(userId: string, module: string, checked: boolean) {
+    const user = users.find(u => u.id === userId)
+    if (!user) return
+    const newPerms = checked
+      ? [...new Set([...user.permissions, module])]
+      : user.permissions.filter(p => p !== module)
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, permissions: newPerms } : u))
+    await fetch(`/api/users/${userId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ permissions: newPerms }),
+    })
   }
 
   async function handleMemberChange(userId: string, clickupUserId: string) {
@@ -91,6 +111,7 @@ export default function UsersPage({ params }: { params: Promise<{ locale: string
               <th className="px-4 py-3 text-left font-medium text-gray-600">Rol</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Lista ClickUp asignada</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Usuario ClickUp</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">Accesos</th>
             </tr>
           </thead>
           <tbody>
@@ -168,6 +189,25 @@ export default function UsersPage({ params }: { params: Promise<{ locale: string
                     </div>
                   ) : (
                     <span className="text-xs text-gray-300">—</span>
+                  )}
+                </td>
+                <td className="px-4 py-3">
+                  {u.role === 'admin' ? (
+                    <span className="text-xs text-gray-400">Acceso total</span>
+                  ) : (
+                    <div className="flex flex-col gap-1">
+                      {MODULES.map(m => (
+                        <label key={m.key} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={u.permissions.includes(m.key)}
+                            onChange={e => handlePermissionToggle(u.id, m.key, e.target.checked)}
+                            className="w-3.5 h-3.5 accent-[#1B3A6B]"
+                          />
+                          <span className="text-xs text-gray-600">{m.label}</span>
+                        </label>
+                      ))}
+                    </div>
                   )}
                 </td>
               </tr>

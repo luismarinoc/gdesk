@@ -8,10 +8,11 @@ interface DashboardShellProps {
   locale: string
   userFullName: string
   userRole: string
+  permissions: string[]
   children: React.ReactNode
 }
 
-export function DashboardShell({ locale, userFullName, userRole, children }: DashboardShellProps) {
+export function DashboardShell({ locale, userFullName, userRole, permissions, children }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   // Persist preference
@@ -30,7 +31,7 @@ export function DashboardShell({ locale, userFullName, userRole, children }: Das
   return (
     <div className="flex min-h-screen bg-[#F7F9FB]">
       {sidebarOpen && (
-        <Sidebar locale={locale} userRole={userRole} userFullName={userFullName} />
+        <Sidebar locale={locale} userRole={userRole} userFullName={userFullName} permissions={permissions} />
       )}
       <div className="flex-1 flex flex-col min-w-0">
         <Header

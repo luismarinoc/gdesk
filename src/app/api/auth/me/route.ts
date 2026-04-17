@@ -7,16 +7,21 @@ export async function GET() {
   if (!user) return NextResponse.json({ user: null })
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('role, clickup_list_id')
+    .select('role, clickup_list_id, permissions')
     .eq('id', user.id)
     .single()
+  const role = profile?.role ?? 'client'
+  const permissions: string[] = role === 'admin'
+    ? ['dashboard', 'tickets']
+    : (profile?.permissions ?? ['tickets'])
   return NextResponse.json({
     user: {
       id: user.id,
       email: user.email,
       fullName: user.user_metadata?.full_name ?? null,
-      role: profile?.role ?? 'client',
+      role,
       clickupListId: profile?.clickup_list_id ?? null,
+      permissions,
     },
   })
 }
