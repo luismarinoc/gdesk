@@ -19,7 +19,10 @@ export function useComments(ticketId: string) {
     setError(null)
     try {
       const res = await fetch(`/api/clickup/tickets/${ticketId}/comments`)
-      if (!res.ok) throw new Error('Failed to fetch comments')
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.error ?? 'Failed to fetch comments')
+      }
       const data = await res.json()
       setComments(
         data.comments.map((c: GDeskComment & { createdAt: string }) => ({

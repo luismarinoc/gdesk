@@ -2,7 +2,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { listComments, createComment } from '@/services/clickup-comment.service'
+import { getTicket } from '@/services/clickup-ticket.service'
 import { createCommentSchema } from '@/lib/validations/comment.schema'
+import type { UserRole } from '@/lib/auth/permissions'
 
 async function requireAuth() {
   const supabase = await createClient()
@@ -10,11 +12,17 @@ async function requireAuth() {
   if (!user) return null
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('full_name, clickup_user_id, clickup_user_name')
+    .select('full_name, role, clickup_user_id, clickup_user_name, permissions')
     .eq('id', user.id)
     .single()
-  const authorName = profile?.clickup_user_name ?? profile?.full_name ?? null
-  return { user, authorName, clickupUserId: profile?.clickup_user_id ?? null }
+  return {
+    user,
+    role: (profile?.role ?? 'client') as UserRole,
+    authorName: profile?.clickup_user_name ?? profile?.full_name ?? null,
+    clickupUserId: profile?.clickup_user_id ?? null,
+    clickupUserName: profile?.clickup_user_name ?? null,
+    permissions: (profile?.permissions ?? []) as string[],
+  }
 }
 
 export async function GET(
@@ -23,7 +31,25 @@ export async function GET(
 ) {
   const auth = await requireAuth()
   if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { id } = await params
+
+  // Si el usuario tiene own_tickets_only, verificar que el ticket esté asignado a él
+  if (auth.role !== 'admin' && auth.permissions.includes('own_tickets_only')) {
+    if (!auth.clickupUserName) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    try {
+      const ticket = await getTicket(id)
+      const isAssigned = ticket.assignees.includes(auth.clickupUserName)
+      if (!isAssigned) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    } catch {
+      return NextResponse.json({ error: 'Ticket not found' }, { status: 404 })
+    }
+  }
+
   try {
     const comments = await listComments(id)
     return NextResponse.json({ comments })
