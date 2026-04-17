@@ -35,17 +35,19 @@ interface AgentStats {
 
 /* ── Donut ── */
 function DonutPct({ pct }: { pct: number }) {
+  const size = 56
+  const cx = size / 2
   const r = 22
   const circ = 2 * Math.PI * r
   const dash = (pct / 100) * circ
   return (
-    <div className="relative w-12 h-12 flex-shrink-0">
-      <svg width="48" height="48" className="-rotate-90">
-        <circle cx="24" cy="24" r={r} fill="none" stroke="#f3f4f6" strokeWidth="4" />
-        <circle cx="24" cy="24" r={r} fill="none" stroke="#22c55e" strokeWidth="4"
+    <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx={cx} cy={cx} r={r} fill="none" stroke="#f3f4f6" strokeWidth="5" />
+        <circle cx={cx} cy={cx} r={r} fill="none" stroke="#22c55e" strokeWidth="5"
           strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" />
       </svg>
-      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-gray-700">
+      <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-gray-700 leading-none">
         {pct}%
       </span>
     </div>
