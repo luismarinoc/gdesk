@@ -10,7 +10,10 @@ interface RichTextRendererProps {
 }
 
 export function RichTextRenderer({ html, className }: RichTextRendererProps) {
-  const sanitized = useMemo(() => DOMPurify.sanitize(html), [html])
+  const sanitized = useMemo(() => DOMPurify.sanitize(html, {
+    ADD_ATTR: ['style'],
+    FORCE_BODY: false,
+  }), [html])
   return (
     <div
       className={`prose prose-sm max-w-none ${className ?? ''}`}
