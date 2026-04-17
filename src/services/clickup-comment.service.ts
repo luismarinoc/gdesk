@@ -41,7 +41,9 @@ export async function createComment(
   ticketId: string,
   input: CreateCommentInput
 ): Promise<GDeskComment> {
-  const text = htmlToPlainText(input.content)
+  // Si el contenido tiene imágenes, enviar HTML directo para no perder las URLs
+  const hasImages = input.content.includes('<img')
+  const text = hasImages ? input.content : htmlToPlainText(input.content)
   const endpoint = input.parentCommentId
     ? `/comment/${input.parentCommentId}/reply`
     : `/task/${ticketId}/comment`
