@@ -54,7 +54,7 @@ export function RichTextEditor({ content = '', placeholder, onChange, hideToolba
         if (!file) return false
         event.preventDefault()
         // editor ref no disponible aquí directamente, usamos el ref
-        uploadAndInsertImage(file, editor)
+        if (editor) uploadAndInsertImage(file, editor)
         return true
       },
     },
