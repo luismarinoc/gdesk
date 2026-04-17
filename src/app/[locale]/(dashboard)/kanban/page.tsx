@@ -35,40 +35,82 @@ function KanbanCard({ ticket, onClick }: { ticket: GDeskTicket; onClick: () => v
   const dateStr = date.toLocaleDateString('es', { day: '2-digit', month: 'short', year: '2-digit' })
 
   return (
-    <div onClick={onClick} className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 space-y-2 hover:shadow-md hover:border-gray-200 transition-all cursor-pointer group">
-      {/* Title */}
-      <p className="text-[13px] font-medium text-gray-800 leading-snug line-clamp-2 group-hover:text-[#1B3A6B] transition-colors">
+    <div onClick={onClick} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 space-y-3 hover:shadow-md hover:border-gray-200 transition-all cursor-pointer group">
+      <p className="text-sm font-medium text-gray-800 leading-snug line-clamp-2 group-hover:text-[#1B3A6B] transition-colors">
         {ticket.title}
       </p>
 
-      {/* Meta row */}
       <div className="flex items-center gap-2 flex-wrap">
-        {/* Ticket number */}
-        <span className="text-[11px] text-gray-400 font-mono">#{ticket.ticketNumber}</span>
-
-        {/* Priority flag */}
-        <span className={`flex items-center gap-0.5 text-[11px] font-medium ${PRIORITY_COLORS[ticket.priority] ?? 'text-gray-300'}`}>
-          <svg className="w-3 h-3 fill-current" viewBox="0 0 16 16">
+        <span className="text-xs text-gray-400 font-mono">#{ticket.ticketNumber}</span>
+        <span className={`flex items-center gap-1 text-xs font-medium ${PRIORITY_COLORS[ticket.priority] ?? 'text-gray-300'}`}>
+          <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 16 16">
             <path d="M2 2h10l-2 4 2 4H2V2z" />
           </svg>
           {PRIORITY_LABELS[ticket.priority] ?? ticket.priority}
         </span>
       </div>
 
-      {/* Bottom row: assignee + date */}
       <div className="flex items-center gap-2">
         {ticket.assignedTo ? (
           <div
-            className="w-5 h-5 rounded-full bg-[#1B3A6B] flex items-center justify-center flex-shrink-0"
+            className="w-7 h-7 rounded-full bg-[#1B3A6B] flex items-center justify-center flex-shrink-0"
             title={ticket.assignedTo}
           >
-            <span className="text-[9px] font-bold text-white">{inits(ticket.assignedTo)}</span>
+            <span className="text-[10px] font-bold text-white">{inits(ticket.assignedTo)}</span>
           </div>
         ) : (
-          <div className="w-5 h-5 rounded-full bg-gray-200 flex-shrink-0" title="Sin asignar" />
+          <div className="w-7 h-7 rounded-full bg-gray-200 flex-shrink-0" title="Sin asignar" />
         )}
-        <span className="text-[11px] text-gray-400 ml-auto">{dateStr}</span>
+        <span className="text-xs text-gray-400 ml-auto">{dateStr}</span>
       </div>
+    </div>
+  )
+}
+
+function AssigneeFilters({ tickets }: { tickets: GDeskTicket[] }) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const assignee = searchParams.get('assignee') ?? ''
+
+  const assignees = useMemo(() => {
+    const names = new Set<string>()
+    tickets.forEach(t => { if (t.assignedTo) names.add(t.assignedTo) })
+    return Array.from(names).sort()
+  }, [tickets])
+
+  if (assignees.length === 0) return null
+
+  function toggle(name: string) {
+    const params = new URLSearchParams(searchParams.toString())
+    if (assignee === name) {
+      params.delete('assignee')
+    } else {
+      params.set('assignee', name)
+    }
+    router.push(`?${params.toString()}`)
+  }
+
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      {assignees.map(name => {
+        const active = assignee === name
+        return (
+          <button
+            key={name}
+            onClick={() => toggle(name)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
+              active
+                ? 'bg-[#1B3A6B] text-white border-[#1B3A6B] shadow-sm'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-[#1B3A6B] hover:text-[#1B3A6B]'
+            }`}
+          >
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 ${active ? 'bg-white/20' : 'bg-[#1B3A6B]'}`}>
+              <span className={active ? 'text-white' : 'text-white'}>{inits(name)}</span>
+            </div>
+            {name}
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -78,18 +120,22 @@ function KanbanBoard() {
   const router = useRouter()
   const { locale } = useParams<{ locale: string }>()
   const searchParams = useSearchParams()
-  const q     = searchParams.get('q')?.toLowerCase() ?? ''
-  const month = searchParams.get('month') ?? ''
+  const q        = searchParams.get('q')?.toLowerCase() ?? ''
+  const month    = searchParams.get('month') ?? ''
+  const assignee = searchParams.get('assignee') ?? ''
+
+  // Tickets filtered only by month (for assignee button list)
+  const byMonth = useMemo(() => {
+    if (!month) return tickets
+    return tickets.filter(t => {
+      const d = new Date(t.createdAt)
+      const v = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      return v === month
+    })
+  }, [tickets, month])
 
   const filtered = useMemo(() => {
-    let result = tickets
-    if (month) {
-      result = result.filter(t => {
-        const d = new Date(t.createdAt)
-        const v = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-        return v === month
-      })
-    }
+    let result = byMonth
     if (q) {
       result = result.filter(t =>
         t.title.toLowerCase().includes(q) ||
@@ -99,8 +145,11 @@ function KanbanBoard() {
         (PRIORITY_LABELS[t.priority] ?? '').toLowerCase().includes(q)
       )
     }
+    if (assignee) {
+      result = result.filter(t => t.assignedTo === assignee)
+    }
     return result
-  }, [tickets, q, month])
+  }, [byMonth, q, assignee])
 
   const grouped = useMemo(() =>
     COLUMNS.reduce<Record<string, GDeskTicket[]>>((acc, col) => {
@@ -112,48 +161,55 @@ function KanbanBoard() {
 
   if (loading) {
     return (
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {COLUMNS.map(col => (
-          <div key={col.key} className="flex-shrink-0 w-64 space-y-3">
-            <Skeleton className="h-8 w-full" />
-            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}
-          </div>
-        ))}
+      <div className="space-y-4">
+        <div className="flex gap-2">
+          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-8 w-28 rounded-full" />)}
+        </div>
+        <div className="flex gap-5 overflow-x-auto pb-4">
+          {COLUMNS.map(col => (
+            <div key={col.key} className="flex-shrink-0 w-80 space-y-3">
+              <Skeleton className="h-9 w-full rounded-full" />
+              {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-28 w-full rounded-xl" />)}
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4 min-h-[calc(100vh-200px)]">
-      {COLUMNS.map(col => {
-        const items = grouped[col.key] ?? []
-        return (
-          <div key={col.key} className="flex-shrink-0 w-64 flex flex-col">
-            {/* Column header — solid pill like ClickUp */}
-            <div
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full mb-3"
-              style={{ backgroundColor: col.color }}
-            >
-              <span className="text-[11px] font-bold tracking-wider text-white truncate flex-1">
-                {col.label}
-              </span>
-              <span className="text-[11px] font-bold text-white bg-white/20 px-1.5 py-0.5 rounded-full flex-shrink-0">
-                {items.length}
-              </span>
-            </div>
+    <div className="space-y-4">
+      <AssigneeFilters tickets={byMonth} />
 
-            {/* Cards */}
-            <div className="flex-1 space-y-2.5 overflow-y-auto pr-0.5">
-              {items.map(ticket => (
-                <KanbanCard key={ticket.id} ticket={ticket} onClick={() => router.push(`/${locale}/tickets/${ticket.id}`)} />
-              ))}
-              {items.length === 0 && (
-                <div className="text-center py-10 text-xs text-gray-300">Sin tickets</div>
-              )}
+      <div className="flex gap-5 overflow-x-auto pb-4 min-h-[calc(100vh-240px)]">
+        {COLUMNS.map(col => {
+          const items = grouped[col.key] ?? []
+          return (
+            <div key={col.key} className="flex-shrink-0 w-80 flex flex-col">
+              <div
+                className="flex items-center gap-2 px-4 py-2 rounded-full mb-4"
+                style={{ backgroundColor: col.color }}
+              >
+                <span className="text-xs font-bold tracking-wider text-white truncate flex-1">
+                  {col.label}
+                </span>
+                <span className="text-xs font-bold text-white bg-white/20 px-2 py-0.5 rounded-full flex-shrink-0">
+                  {items.length}
+                </span>
+              </div>
+
+              <div className="flex-1 space-y-3 overflow-y-auto pr-0.5">
+                {items.map(ticket => (
+                  <KanbanCard key={ticket.id} ticket={ticket} onClick={() => router.push(`/${locale}/tickets/${ticket.id}`)} />
+                ))}
+                {items.length === 0 && (
+                  <div className="text-center py-10 text-xs text-gray-300">Sin tickets</div>
+                )}
+              </div>
             </div>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
     </div>
   )
 }

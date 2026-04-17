@@ -63,10 +63,12 @@ export function Header({ locale, userFullName, sidebarOpen, onToggleSidebar }: H
       ).slice(0, 8)
     : []
 
+  const isKanban = pathname.includes('/kanban')
+
   const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value
     setSearchValue(val)
-    setShowDropdown(true)
+    setShowDropdown(!isKanban)
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString())
@@ -131,13 +133,19 @@ export function Header({ locale, userFullName, sidebarOpen, onToggleSidebar }: H
             type="text"
             value={searchValue}
             onChange={handleSearch}
-            onFocus={() => q.length >= 2 && setShowDropdown(true)}
+            onFocus={() => q.length >= 2 && !isKanban && setShowDropdown(true)}
             placeholder="Buscar tickets..."
             className="w-full pl-9 pr-4 py-2 bg-gray-50 rounded-lg text-sm text-gray-700 placeholder-gray-400 outline-none focus:bg-gray-100 transition-colors border-0"
           />
           {searchValue && (
             <button
-              onClick={() => { setSearchValue(''); setShowDropdown(false) }}
+              onClick={() => {
+              setSearchValue('')
+              setShowDropdown(false)
+              const params = new URLSearchParams(searchParams.toString())
+              params.delete('q')
+              router.push(`${pathname}?${params.toString()}`)
+            }}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               ✕
