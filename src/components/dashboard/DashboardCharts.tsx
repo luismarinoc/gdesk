@@ -54,7 +54,7 @@ export function Sparkline({ color, data = DEFAULT_SPARK }: SparklineProps) {
   )
 }
 
-/* ── Donut Chart ──────────────────────────────────────────────── */
+/* ── Distribution Bars ────────────────────────────────────────── */
 interface DonutProps {
   data: { name: string; value: number; color?: string }[]
 }
@@ -69,41 +69,23 @@ export function SatisfactionDonut({ data }: DonutProps) {
     )
   }
   return (
-    <div className="flex items-center w-full gap-4">
-      <div className="flex-1 min-w-0" style={{ height: 150 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius="45%"
-              outerRadius="75%"
-              dataKey="value"
-              isAnimationActive={false}
-            >
-              {data.map((d) => (
-                <Cell key={d.name} fill={d.color ?? STATUS_COLORS[d.name] ?? '#9ca3af'} />
-              ))}
-            </Pie>
-            <Tooltip
-              formatter={(v) => [`${Math.round((Number(v) / total) * 100)}%`, '']}
-              contentStyle={{ fontSize: 12, borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-            />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
-      <div className="space-y-3 text-sm flex-shrink-0">
-        {data.map((d) => (
-          <div key={d.name} className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: d.color ?? STATUS_COLORS[d.name] ?? '#9ca3af' }} />
-            <span className="text-xs text-gray-600">{d.name}</span>
-            <span className="ml-auto text-xs font-semibold text-gray-800 pl-2">
-              {Math.round((d.value / total) * 100)}%
-            </span>
+    <div className="space-y-3 py-2">
+      {data.map((d) => {
+        const pct = Math.round((d.value / total) * 100)
+        const color = d.color ?? STATUS_COLORS[d.name] ?? '#9ca3af'
+        return (
+          <div key={d.name} className="flex items-center gap-3">
+            <span className="text-xs text-gray-600 w-40 truncate flex-shrink-0">{d.name}</span>
+            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{ width: `${pct}%`, backgroundColor: color }}
+              />
+            </div>
+            <span className="text-xs font-semibold text-gray-700 w-8 text-right flex-shrink-0">{pct}%</span>
           </div>
-        ))}
-      </div>
+        )
+      })}
     </div>
   )
 }
@@ -120,8 +102,8 @@ const label = (key: string) => (
 
 export function TicketsBarChart({ data }: BarProps) {
   return (
-    <ResponsiveContainer width="100%" height={200}>
-      <BarChart data={data} margin={{ top: 14, right: 4, left: -24, bottom: 0 }} barSize={10} barCategoryGap="20%">
+    <ResponsiveContainer width="100%" height={250}>
+      <BarChart data={data} margin={{ top: 20, right: 4, left: -24, bottom: 0 }} barSize={25} barCategoryGap="20%" barGap={3}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
         <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
         <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />

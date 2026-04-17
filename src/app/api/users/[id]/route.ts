@@ -21,8 +21,13 @@ export async function PATCH(
   const body = await req.json()
 
   const serviceClient = createServiceClient()
-  const update: Record<string, string | null> = {}
+  const update: Record<string, unknown> = {}
   if ('clickup_list_id' in body) update.clickup_list_id = body.clickup_list_id ?? null
+  if ('clickup_list_ids' in body && Array.isArray(body.clickup_list_ids)) {
+    update.clickup_list_ids = body.clickup_list_ids
+    // Sync single-id to first of the array for backward compat
+    update.clickup_list_id = body.clickup_list_ids[0] ?? null
+  }
   if ('clickup_user_id' in body) update.clickup_user_id = body.clickup_user_id ?? null
   if ('clickup_user_name' in body) update.clickup_user_name = body.clickup_user_name ?? null
   if ('role' in body && ['admin', 'agent', 'client'].includes(body.role)) update.role = body.role

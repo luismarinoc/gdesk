@@ -29,6 +29,7 @@ export function TicketsTable({ tickets, loading, monthFilter = 'all' }: TicketsT
   const locale = params.locale as string
   const searchParams = useSearchParams()
   const q = searchParams.get('q')?.toLowerCase() ?? ''
+  const assignee = searchParams.get('assignee') ?? ''
 
   const filtered = useMemo(() => {
     return tickets
@@ -38,6 +39,7 @@ export function TicketsTable({ tickets, loading, monthFilter = 'all' }: TicketsT
         const v = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
         return v === monthFilter
       })
+      .filter(t => !assignee || t.assignedTo === assignee)
       .filter(t =>
         !q ||
         t.title.toLowerCase().includes(q) ||
@@ -46,10 +48,19 @@ export function TicketsTable({ tickets, loading, monthFilter = 'all' }: TicketsT
         t.priority.toLowerCase().includes(q) ||
         t.status.toLowerCase().includes(q)
       )
-  }, [tickets, monthFilter, q])
+  }, [tickets, monthFilter, assignee, q])
 
   const columns = useMemo<ColumnDef<GDeskTicket>[]>(() => [
-    { accessorKey: 'ticketNumber', header: t('number'), size: 80 },
+    {
+      accessorKey: 'ticketNumber',
+      header: t('number'),
+      size: 80,
+      cell: ({ getValue }) => (
+        <span className="font-mono text-[11.5px] text-gray-400 bg-gray-50 border border-gray-200 rounded-md px-2 py-0.5 whitespace-nowrap">
+          #{getValue<string>()}
+        </span>
+      ),
+    },
     { accessorKey: 'title', header: t('titleCol') },
     {
       accessorKey: 'status',
@@ -97,15 +108,15 @@ export function TicketsTable({ tickets, loading, monthFilter = 'all' }: TicketsT
         <span className="text-xs text-gray-400">{filtered.length} tickets</span>
       </div>
 
-      <div className="rounded-md border bg-white overflow-auto" style={{ maxHeight: 'calc(100vh - 220px)' }}>
+      <div className="rounded-xl border border-gray-200 bg-white overflow-auto" style={{ maxHeight: 'calc(100vh - 220px)' }}>
         <table className="w-full text-sm">
           <thead>
             {table.getHeaderGroups().map(hg => (
-              <tr key={hg.id} className="border-b bg-gray-50 sticky top-0 z-10">
+              <tr key={hg.id} className="border-b bg-gray-50/80 sticky top-0 z-10">
                 {hg.headers.map(header => (
                   <th
                     key={header.id}
-                    className="px-4 py-3 text-left font-medium text-gray-600 cursor-pointer select-none"
+                    className="px-4 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wide cursor-pointer select-none whitespace-nowrap"
                     onClick={header.column.getToggleSortingHandler()}
                   >
                     {flexRender(header.column.columnDef.header, header.getContext())}
@@ -119,11 +130,11 @@ export function TicketsTable({ tickets, loading, monthFilter = 'all' }: TicketsT
             {table.getRowModel().rows.map(row => (
               <tr
                 key={row.id}
-                className="border-b hover:bg-gray-50 cursor-pointer"
+                className="border-b border-gray-100 hover:bg-blue-50/40 cursor-pointer transition-colors"
                 onClick={() => router.push(`/${locale}/tickets/${row.original.id}`)}
               >
                 {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className="px-4 py-3">
+                  <td key={cell.id} className="px-4 py-3 text-[13.5px]">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}

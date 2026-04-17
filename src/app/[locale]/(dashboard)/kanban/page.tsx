@@ -7,12 +7,12 @@ import { useSearchParams, useRouter, useParams } from 'next/navigation'
 import { MonthSelect } from '@/components/shared/MonthSelect'
 import type { GDeskTicket } from '@/types'
 
-const COLUMNS: { key: GDeskTicket['status']; label: string; color: string }[] = [
-  { key: 'backlog',               label: 'BACKLOG',               color: '#787486' },
-  { key: 'listo_para_trabajar',   label: 'LISTO PARA TRABAJAR',   color: '#e11d48' },
-  { key: 'en_progreso',           label: 'EN PROGRESO',           color: '#4194f0' },
-  { key: 'supervision_y_control', label: 'SUPERVISIÓN Y CONTROL', color: '#f97316' },
-  { key: 'cerrado',               label: 'CERRADO',               color: '#22c55e' },
+const COLUMNS: { key: GDeskTicket['status']; label: string; color: string; bg: string }[] = [
+  { key: 'backlog',               label: 'Backlog',               color: '#787486', bg: '#f3f4f6' },
+  { key: 'listo_para_trabajar',   label: 'Listo para Trabajar',   color: '#e11d48', bg: '#ffe4e6' },
+  { key: 'en_progreso',           label: 'En Progreso',           color: '#4194f0', bg: '#dbeafe' },
+  { key: 'supervision_y_control', label: 'Supervisión y Control', color: '#f97316', bg: '#ffedd5' },
+  { key: 'cerrado',               label: 'Cerrado',               color: '#22c55e', bg: '#dcfce7' },
 ]
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -90,24 +90,38 @@ function AssigneeFilters({ tickets }: { tickets: GDeskTicket[] }) {
     router.push(`?${params.toString()}`)
   }
 
+  const total = tickets.length
+
   return (
-    <div className="flex items-center gap-2 flex-wrap">
-      {assignees.map(name => {
+    <div className="flex items-center gap-3 flex-wrap">
+      {assignees.map((name, idx) => {
         const active = assignee === name
+        const count = tickets.filter(t => t.assignedTo === name).length
+        const pct = total > 0 ? Math.round((count / total) * 100) : 0
+        const color = ['#6366f1','#4194f0','#22c55e','#f97316','#e11d48','#a855f7'][idx % 6]
+        const bg    = ['#ede9fe','#dbeafe','#dcfce7','#ffedd5','#ffe4e6','#f3e8ff'][idx % 6]
         return (
           <button
             key={name}
             onClick={() => toggle(name)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
-              active
-                ? 'bg-[#1B3A6B] text-white border-[#1B3A6B] shadow-sm'
-                : 'bg-white text-gray-600 border-gray-200 hover:border-[#1B3A6B] hover:text-[#1B3A6B]'
-            }`}
+            className="flex items-center gap-3 px-4 py-3 rounded-2xl transition-all card-shadow"
+            style={{ backgroundColor: bg, outline: active ? `2px solid ${color}` : 'none', outlineOffset: '2px', minWidth: '170px' }}
           >
-            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 ${active ? 'bg-white/20' : 'bg-[#1B3A6B]'}`}>
-              <span className={active ? 'text-white' : 'text-white'}>{inits(name)}</span>
+            <div
+              className="w-11 h-11 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-bold"
+              style={{ backgroundColor: color }}
+            >
+              {inits(name)}
             </div>
-            {name}
+            <div className="text-left flex-1 min-w-0">
+              <p className="font-bold text-gray-800 text-sm truncate">{name}</p>
+              <p className="text-xs mt-0.5" style={{ color }}>{count} tickets · {pct}%</p>
+            </div>
+            {active && (
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke={color} strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+              </svg>
+            )}
           </button>
         )
       })}
@@ -120,9 +134,10 @@ function KanbanBoard() {
   const router = useRouter()
   const { locale } = useParams<{ locale: string }>()
   const searchParams = useSearchParams()
-  const q        = searchParams.get('q')?.toLowerCase() ?? ''
-  const month    = searchParams.get('month') ?? ''
-  const assignee = searchParams.get('assignee') ?? ''
+  const q           = searchParams.get('q')?.toLowerCase() ?? ''
+  const month       = searchParams.get('month') ?? ''
+  const assignee    = searchParams.get('assignee') ?? ''
+  const statusFilter = searchParams.get('status') ?? ''
 
   // Tickets filtered only by month (for assignee button list)
   const byMonth = useMemo(() => {
@@ -177,6 +192,8 @@ function KanbanBoard() {
     )
   }
 
+  const total = byMonth.length
+
   return (
     <div className="space-y-4">
       <AssigneeFilters tickets={byMonth} />
@@ -184,18 +201,25 @@ function KanbanBoard() {
       <div className="flex gap-5 overflow-x-auto pb-4 min-h-[calc(100vh-240px)]">
         {COLUMNS.map(col => {
           const items = grouped[col.key] ?? []
+          const count = items.length
+          const pct = total > 0 ? Math.round((count / total) * 100) : 0
+          const r = 20, circ = 2 * Math.PI * r, dash = circ * (pct / 100)
           return (
             <div key={col.key} className="flex-shrink-0 w-80 flex flex-col">
-              <div
-                className="flex items-center gap-2 px-4 py-2 rounded-full mb-4"
-                style={{ backgroundColor: col.color }}
-              >
-                <span className="text-xs font-bold tracking-wider text-white truncate flex-1">
-                  {col.label}
-                </span>
-                <span className="text-xs font-bold text-white bg-white/20 px-2 py-0.5 rounded-full flex-shrink-0">
-                  {items.length}
-                </span>
+              {/* KPI como header de columna */}
+              <div className="rounded-2xl card-shadow p-3 flex items-center gap-3 mb-4" style={{ backgroundColor: col.bg }}>
+                <div className="relative flex-shrink-0 w-11 h-11 flex items-center justify-center">
+                  <svg width="44" height="44" className="-rotate-90">
+                    <circle cx="22" cy="22" r={r} fill="none" stroke="#e5e7eb" strokeWidth="5" />
+                    <circle cx="22" cy="22" r={r} fill="none" stroke={col.color} strokeWidth="5"
+                      strokeLinecap="round" strokeDasharray={`${dash} ${circ}`} />
+                  </svg>
+                  <span className="absolute text-[9px] font-bold" style={{ color: col.color }}>{pct}%</span>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-2xl font-bold text-gray-800 leading-none">{count}</p>
+                  <p className="text-sm text-gray-500 mt-0.5 truncate">{col.label}</p>
+                </div>
               </div>
 
               <div className="flex-1 space-y-3 overflow-y-auto pr-0.5">

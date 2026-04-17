@@ -135,7 +135,7 @@ export function Header({ locale, userFullName, sidebarOpen, onToggleSidebar }: H
             onChange={handleSearch}
             onFocus={() => q.length >= 2 && !isKanban && setShowDropdown(true)}
             placeholder="Buscar tickets..."
-            className="w-full pl-9 pr-4 py-2 bg-gray-50 rounded-lg text-sm text-gray-700 placeholder-gray-400 outline-none focus:bg-gray-100 transition-colors border-0"
+            className="w-full pl-9 pr-4 py-2 bg-gray-50 rounded-lg text-sm text-gray-700 placeholder-gray-400 outline-none focus:bg-white focus:border-blue-300 transition-colors border border-gray-200"
           />
           {searchValue && (
             <button
@@ -187,7 +187,7 @@ export function Header({ locale, userFullName, sidebarOpen, onToggleSidebar }: H
 
       {/* Right side */}
       <div className="flex items-center gap-2 ml-auto">
-        <div className="flex items-center rounded-lg border border-gray-200 overflow-hidden text-xs font-semibold">
+        <div className="hidden sm:flex items-center rounded-lg border border-gray-200 overflow-hidden text-xs font-semibold">
           <button
             onClick={() => handleLocaleChange('es')}
             className={locale === 'es' ? 'px-2.5 py-1.5 bg-[#1B3A6B] text-white' : 'px-2.5 py-1.5 text-gray-500 hover:bg-gray-50'}

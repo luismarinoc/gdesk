@@ -1,14 +1,80 @@
 'use client'
 
-import { Suspense, useState, useEffect } from 'react'
+import { Suspense, useState, useEffect, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
-import { useParams, useSearchParams } from 'next/navigation'
+import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { TicketsTable } from '@/components/tickets/TicketsTable'
 import { MonthSelect } from '@/components/shared/MonthSelect'
 import { AdminListSelector } from '@/components/shared/AdminListSelector'
 import { useTickets, ADMIN_LIST_KEY } from '@/hooks/useTickets'
+import type { GDeskTicket } from '@/types'
+
+const USER_LIST_KEY = 'gdesk_user_list'
+
+function inits(name: string) {
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+}
+
+function AssigneeFilters({ tickets }: { tickets: GDeskTicket[] }) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const assignee = searchParams.get('assignee') ?? ''
+
+  const assignees = useMemo(() => {
+    const names = new Set<string>()
+    tickets.forEach(t => { if (t.assignedTo) names.add(t.assignedTo) })
+    return Array.from(names).sort()
+  }, [tickets])
+
+  if (assignees.length === 0) return null
+
+  const total = tickets.length
+
+  function toggle(name: string) {
+    const params = new URLSearchParams(searchParams.toString())
+    if (assignee === name) params.delete('assignee')
+    else params.set('assignee', name)
+    router.push(`?${params.toString()}`)
+  }
+
+  return (
+    <div className="flex items-center gap-3 flex-wrap">
+      {assignees.map((name, idx) => {
+        const active = assignee === name
+        const count = tickets.filter(t => t.assignedTo === name).length
+        const pct = total > 0 ? Math.round((count / total) * 100) : 0
+        const color = ['#6366f1','#4194f0','#22c55e','#f97316','#e11d48','#a855f7'][idx % 6]
+        const bg    = ['#ede9fe','#dbeafe','#dcfce7','#ffedd5','#ffe4e6','#f3e8ff'][idx % 6]
+        return (
+          <button
+            key={name}
+            onClick={() => toggle(name)}
+            className="flex items-center gap-3 px-4 py-3 rounded-2xl transition-all card-shadow"
+            style={{ backgroundColor: bg, outline: active ? `2px solid ${color}` : 'none', outlineOffset: '2px', minWidth: '170px' }}
+          >
+            <div
+              className="w-11 h-11 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-bold"
+              style={{ backgroundColor: color }}
+            >
+              {inits(name)}
+            </div>
+            <div className="text-left flex-1 min-w-0">
+              <p className="font-bold text-gray-800 text-sm truncate">{name}</p>
+              <p className="text-xs mt-0.5" style={{ color }}>{count} tickets · {pct}%</p>
+            </div>
+            {active && (
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke={color} strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+              </svg>
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
 
 function TicketsPageInner() {
   const t = useTranslations('tickets')
@@ -21,33 +87,67 @@ function TicketsPageInner() {
   const [isAgent, setIsAgent] = useState(false)
   const [adminList, setAdminList] = useState<{ id: string; name: string } | null>(null)
   const [showSelector, setShowSelector] = useState(false)
+  const [userActiveList, setUserActiveList] = useState<{ id: string; name: string } | null>(null)
+  const [userLists, setUserLists] = useState<{ id: string; name: string }[]>([])
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then(r => r.json())
-      .then(data => {
-        const role = data.user?.role
-        if (role === 'agent') setIsAgent(true)
-        if (role === 'admin') {
-          setIsAdmin(true)
-          const saved = localStorage.getItem(ADMIN_LIST_KEY)
-          if (saved) {
-            setAdminList(JSON.parse(saved))
-          } else if (data.user?.clickupListId) {
-            // Usar la lista asignada en Supabase como default
-            const defaultList = { id: data.user.clickupListId, name: 'Mi lista' }
-            localStorage.setItem(ADMIN_LIST_KEY, JSON.stringify(defaultList))
-            setAdminList(defaultList)
-          } else {
-            setShowSelector(true)
-          }
+    Promise.all([
+      fetch('/api/auth/me').then(r => r.json()),
+      fetch('/api/clickup/lists').then(r => r.json()),
+    ]).then(([meData, listsData]) => {
+      const role = meData.user?.role
+      const allLists: { id: string; name: string }[] = listsData.lists ?? []
+      if (role === 'agent') setIsAgent(true)
+      if (role === 'admin') {
+        setIsAdmin(true)
+        const saved = localStorage.getItem(ADMIN_LIST_KEY)
+        if (saved) {
+          setAdminList(JSON.parse(saved))
+        } else if (meData.user?.clickupListId) {
+          const defaultList = { id: meData.user.clickupListId, name: 'Mi lista' }
+          localStorage.setItem(ADMIN_LIST_KEY, JSON.stringify(defaultList))
+          setAdminList(defaultList)
+        } else {
+          setShowSelector(true)
         }
-        setReady(true)
-      })
+      } else {
+        // Non-admin: check if user has multiple assigned lists
+        const assignedIds: string[] = meData.user?.clickupListIds ?? []
+        if (assignedIds.length > 1) {
+          const mapped = assignedIds
+            .map(id => allLists.find(l => l.id === id) ?? { id, name: id })
+          setUserLists(mapped)
+          const saved = localStorage.getItem(USER_LIST_KEY)
+          const savedParsed = saved ? JSON.parse(saved) : null
+          const active = (savedParsed && assignedIds.includes(savedParsed.id))
+            ? savedParsed
+            : mapped[0]
+          setUserActiveList(active)
+          localStorage.setItem(USER_LIST_KEY, JSON.stringify(active))
+        }
+      }
+      setReady(true)
+    })
   }, [])
 
-  const { tickets, loading, error } = useTickets(adminList?.id)
+  function handleUserListSwitch(list: { id: string; name: string }) {
+    setUserActiveList(list)
+    localStorage.setItem(USER_LIST_KEY, JSON.stringify(list))
+  }
+
+  const activeListId = isAdmin ? adminList?.id : (userActiveList?.id ?? undefined)
+  const { tickets, loading, error } = useTickets(activeListId)
+
+  // Tickets filtered only by month (for assignee button list — same pattern as Kanban)
+  const byMonth = useMemo(() => {
+    if (month === 'all') return tickets
+    return tickets.filter(t => {
+      const d = new Date(t.createdAt)
+      const v = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      return v === month
+    })
+  }, [tickets, month])
 
   function handleListSelect(id: string, name: string) {
     setAdminList({ id, name })
@@ -73,6 +173,23 @@ function TicketsPageInner() {
                 </svg>
               </button>
             )}
+            {!isAdmin && userLists.length > 1 && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {userLists.map(l => (
+                  <button
+                    key={l.id}
+                    onClick={() => handleUserListSwitch(l)}
+                    className="text-xs px-2.5 py-1 rounded-full border transition-colors"
+                    style={userActiveList?.id === l.id
+                      ? { backgroundColor: '#1B3A6B', color: '#fff', borderColor: '#1B3A6B' }
+                      : { backgroundColor: 'transparent', color: '#1B3A6B', borderColor: 'rgba(27,58,107,0.2)' }
+                    }
+                  >
+                    {l.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <MonthSelect value={month} />
@@ -83,6 +200,9 @@ function TicketsPageInner() {
             )}
           </div>
         </div>
+
+        <AssigneeFilters tickets={ready ? byMonth : []} />
+
         {error === 'NO_LIST_ASSIGNED' && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center">

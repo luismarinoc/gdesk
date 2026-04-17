@@ -5,6 +5,9 @@ import type { GDeskTicket } from '@/types'
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 export const ADMIN_LIST_KEY = 'gdesk_admin_list'
 
+// In-flight dedup: evita que múltiples componentes disparen el mismo fetch simultáneamente
+const inFlight: Map<string, Promise<GDeskTicket[]>> = new Map()
+
 function cacheKey(listId?: string) {
   return listId ? `gdesk_tickets_${listId}` : 'gdesk_tickets_v1'
 }
@@ -36,6 +39,32 @@ function writeCache(tickets: GDeskTicket[], listId?: string) {
   } catch {}
 }
 
+async function fetchFromApi(listId?: string): Promise<GDeskTicket[]> {
+  const key = cacheKey(listId)
+
+  // Si ya hay un fetch en vuelo para esta key, reutilizarlo
+  const existing = inFlight.get(key)
+  if (existing) return existing
+
+  const url = listId ? `/api/clickup/tickets?listId=${listId}` : '/api/clickup/tickets'
+  const promise = fetch(url, { cache: 'no-store' })
+    .then(async res => {
+      if (!res.ok) {
+        try { sessionStorage.removeItem(key) } catch {}
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.error ?? 'Failed to fetch tickets')
+      }
+      const { tickets: raw } = await res.json()
+      const parsed = parseTickets(raw)
+      writeCache(parsed, listId)
+      return parsed
+    })
+    .finally(() => inFlight.delete(key))
+
+  inFlight.set(key, promise)
+  return promise
+}
+
 export function useTickets(listId?: string) {
   const cached = useRef(readCache(listId))
   const [tickets, setTickets] = useState<GDeskTicket[]>(cached.current ?? [])
@@ -45,24 +74,16 @@ export function useTickets(listId?: string) {
   const fetchTickets = useCallback(async (force = false) => {
     if (!force) {
       const hit = readCache(listId)
-      if (hit) setTickets(hit) // render optimista, pero igual va al API
+      if (hit) {
+        setTickets(hit)
+        setLoading(false)
+        return // caché válido → no llama al API
+      }
     }
     setLoading(true)
     setError(null)
     try {
-      const url = listId
-        ? `/api/clickup/tickets?listId=${listId}`
-        : '/api/clickup/tickets'
-      const res = await fetch(url, { cache: 'no-store' })
-      if (!res.ok) {
-        // Limpiar caché obsoleto antes de propagar el error
-        try { sessionStorage.removeItem(cacheKey(listId)) } catch {}
-        const body = await res.json().catch(() => ({}))
-        throw new Error(body.error ?? 'Failed to fetch tickets')
-      }
-      const { tickets: raw } = await res.json()
-      const parsed = parseTickets(raw)
-      writeCache(parsed, listId)
+      const parsed = await fetchFromApi(listId)
       setTickets(parsed)
     } catch (err) {
       setTickets([])

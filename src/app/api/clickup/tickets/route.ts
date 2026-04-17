@@ -19,13 +19,14 @@ async function requireAuth() {
   if (!user) return null
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('role, clickup_list_id, clickup_user_name, permissions')
+    .select('role, clickup_list_id, clickup_list_ids, clickup_user_name, permissions')
     .eq('id', user.id)
     .single()
   return {
     user,
     role: (profile?.role ?? 'client') as UserRole,
     clickupListId: profile?.clickup_list_id ?? null,
+    clickupListIds: (profile?.clickup_list_ids ?? []) as string[],
     clickupUserName: profile?.clickup_user_name ?? null,
     permissions: (profile?.permissions ?? []) as string[],
   }
@@ -38,13 +39,21 @@ export async function GET(req: NextRequest) {
   // Admin puede pasar ?listId=xxx para filtrar por lista seleccionada
   const queryListId = req.nextUrl.searchParams.get('listId')
 
-  if (auth.role !== 'admin' && !auth.clickupListId) {
+  const hasAnyList = auth.clickupListId || auth.clickupListIds.length > 0
+  if (auth.role !== 'admin' && !hasAnyList) {
     return NextResponse.json({ error: 'NO_LIST_ASSIGNED' }, { status: 403 })
   }
 
-  const listId = auth.role === 'admin'
-    ? (queryListId ?? auth.clickupListId ?? process.env.CLICKUP_LIST_ID!)
-    : auth.clickupListId!
+  let listId: string
+  if (auth.role === 'admin') {
+    listId = queryListId ?? auth.clickupListId ?? process.env.CLICKUP_LIST_ID!
+  } else {
+    // Non-admin can switch between their assigned lists via ?listId
+    const allLists = auth.clickupListIds.length > 0 ? auth.clickupListIds : [auth.clickupListId!]
+    listId = (queryListId && allLists.includes(queryListId))
+      ? queryListId
+      : (auth.clickupListId ?? allLists[0])
+  }
 
   try {
     let tickets = await getCachedTickets(listId)

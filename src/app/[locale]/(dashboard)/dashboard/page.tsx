@@ -143,12 +143,12 @@ export default async function DashboardPage({
   ].filter(d => d.value > 0)
 
   const kpiCards = [
-    { label: 'Total',                  sublabel: 'Todos los tickets',   value: total,            color: '#6366f1', textColor: 'text-indigo-600' },
-    { label: 'Backlog',                sublabel: 'Sin iniciar',         value: backlogCount,      color: '#787486', textColor: 'text-gray-500'   },
-    { label: 'Listo para Trabajar',    sublabel: 'Listos para asignar', value: listoCount,        color: '#e11d48', textColor: 'text-rose-600'   },
-    { label: 'En Progreso',            sublabel: 'Siendo atendidos',    value: enProgresoCount,   color: '#4194f0', textColor: 'text-blue-500'   },
-    { label: 'Supervisión y Control',  sublabel: 'En revisión',         value: supervisionCount,  color: '#f97316', textColor: 'text-orange-500' },
-    { label: 'Cerrado',                sublabel: 'Finalizados',         value: cerradoCount,      color: '#22c55e', textColor: 'text-green-600'  },
+    { label: 'Total',                  sublabel: 'Todos los tickets',   value: total,            color: '#6366f1', textColor: 'text-indigo-700', bg: '#ede9fe' },
+    { label: 'Backlog',                sublabel: 'Sin iniciar',         value: backlogCount,      color: '#787486', textColor: 'text-gray-600',   bg: '#f3f4f6' },
+    { label: 'Listo para Trabajar',    sublabel: 'Listos para asignar', value: listoCount,        color: '#e11d48', textColor: 'text-rose-700',   bg: '#ffe4e6' },
+    { label: 'En Progreso',            sublabel: 'Siendo atendidos',    value: enProgresoCount,   color: '#4194f0', textColor: 'text-blue-700',   bg: '#dbeafe' },
+    { label: 'Supervisión y Control',  sublabel: 'En revisión',         value: supervisionCount,  color: '#f97316', textColor: 'text-orange-700', bg: '#ffedd5' },
+    { label: 'Cerrado',                sublabel: 'Finalizados',         value: cerradoCount,      color: '#22c55e', textColor: 'text-green-700',  bg: '#dcfce7' },
   ]
 
   const selectedMonthLabel = month
@@ -175,20 +175,34 @@ export default async function DashboardPage({
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-        {kpiCards.map(({ label, sublabel, value, color, textColor }) => {
-          const pct = total > 0 && label !== 'Total' ? Math.round((value / total) * 100) : null
+        {kpiCards.map(({ label, sublabel, value, color, bg }) => {
+          const pct = total > 0 ? Math.round((value / total) * 100) : (label === 'Total' ? 100 : 0)
+          const r = 22
+          const circ = 2 * Math.PI * r
+          const dash = circ * (pct / 100)
           return (
-          <div key={label} className="bg-white rounded-xl shadow-sm p-4">
-            <div className="flex items-end justify-between gap-1">
-              <p className="text-2xl font-bold text-gray-800">{value}</p>
-              {pct !== null && (
-                <p className="text-xs font-semibold pb-0.5" style={{ color }}>{pct}%</p>
-              )}
+          <div key={label} className="rounded-2xl card-shadow p-4 flex items-center gap-3" style={{ backgroundColor: bg }}>
+            {/* Ring */}
+            <div className="relative flex-shrink-0 w-14 h-14 flex items-center justify-center">
+              <svg width="56" height="56" className="-rotate-90">
+                <circle cx="28" cy="28" r={r} fill="none" stroke="#e5e7eb" strokeWidth="6" />
+                <circle
+                  cx="28" cy="28" r={r} fill="none"
+                  stroke={color} strokeWidth="6"
+                  strokeLinecap="round"
+                  strokeDasharray={`${dash} ${circ}`}
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>
+                </svg>
+              </div>
             </div>
-            <p className={`text-xs font-semibold mt-0.5 ${textColor}`}>{label}</p>
-            <p className="text-[11px] text-gray-400 leading-tight">{sublabel}</p>
-            <div className="mt-2 h-1 rounded-full bg-gray-100 overflow-hidden">
-              <div className="h-full rounded-full" style={{ width: `${pct ?? 100}%`, backgroundColor: color }} />
+            {/* Text */}
+            <div className="min-w-0">
+              <p className="text-3xl font-bold text-gray-800 leading-none">{value}</p>
+              <p className="text-[13px] text-gray-500 mt-1 truncate">{label}</p>
             </div>
           </div>
           )
@@ -197,7 +211,7 @@ export default async function DashboardPage({
 
       {/* Donut + Agent table */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-xl shadow-sm p-4 flex flex-col">
+        <div className="bg-white rounded-xl card-shadow p-4 flex flex-col">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-sm font-semibold text-gray-700">Distribución de Tickets</h2>
             <Link href={`/${locale}/tickets`} className="text-xs text-[#1B3A6B] hover:underline">Ver más</Link>
@@ -205,9 +219,9 @@ export default async function DashboardPage({
           <SatisfactionDonut data={donutData.length > 0 ? donutData : [{ name: 'Sin tickets', value: 1 }]} />
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-4 flex flex-col">
+        <div className="bg-white rounded-xl card-shadow p-4 flex flex-col">
           <h2 className="text-sm font-semibold text-gray-700 mb-2">Tickets por Agente</h2>
-          <div className="overflow-y-auto" style={{ maxHeight: 180 }}>
+          <div className="overflow-y-auto" style={{ maxHeight: 240 }}>
             {topAgents.length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-4">Sin tickets asignados</p>
             ) : (
@@ -245,7 +259,7 @@ export default async function DashboardPage({
 
       {/* Recent tickets + bar chart */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-xl shadow-sm p-4">
+        <div className="bg-white rounded-xl card-shadow p-4" style={{ height: '320px' }}>
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-sm font-semibold text-gray-700">Tickets Recientes</h2>
             <Link href={`/${locale}/tickets`} className="text-xs text-[#1B3A6B] font-medium hover:underline">Ver todos</Link>
@@ -253,7 +267,7 @@ export default async function DashboardPage({
           {recent.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-4">Sin tickets en este período</p>
           ) : (
-            <div className="overflow-y-auto space-y-1" style={{ maxHeight: 200 }}>
+            <div className="overflow-y-auto space-y-1" style={{ maxHeight: 240 }}>
               {recent.map((ticket, i) => (
                 <Link
                   key={ticket.id}
@@ -276,7 +290,7 @@ export default async function DashboardPage({
           )}
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-4">
+        <div className="bg-white rounded-xl card-shadow p-4" style={{ height: '320px' }}>
           <div className="mb-1">
             <h2 className="text-sm font-semibold text-gray-700">Comparación de Tickets</h2>
             <p className="text-xs text-gray-400 mb-2">Distribución por estado — últimos 6 meses</p>

@@ -128,3 +128,8 @@
     @apply font-sans;
   }
 }
+
+.card-shadow {
+  box-shadow: 4px 4px 14px rgba(0, 0, 0, 0.09);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
