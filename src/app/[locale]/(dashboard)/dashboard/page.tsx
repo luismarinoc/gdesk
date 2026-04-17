@@ -29,16 +29,21 @@ export default async function DashboardPage({
   const { data: { user } } = await supabase.auth.getUser()
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('full_name, role, clickup_list_id')
+    .select('full_name, role, clickup_list_id, clickup_user_name, permissions')
     .eq('id', user!.id)
     .single()
 
   const firstName = (profile?.full_name ?? user?.email ?? '').split(' ')[0]
   const listId = profile?.clickup_list_id ?? process.env.CLICKUP_LIST_ID!
+  const permissions: string[] = profile?.permissions ?? []
+  const ownOnly = profile?.role !== 'admin' && permissions.includes('own_tickets_only') && !!profile?.clickup_user_name
 
   let allTickets: GDeskTicket[] = []
   try {
-    allTickets = await getCachedTickets(listId)
+    const fetched = await getCachedTickets(listId)
+    allTickets = ownOnly
+      ? fetched.filter(t => t.assignedTo === profile!.clickup_user_name)
+      : fetched
   } catch {
     // silently fail
   }
