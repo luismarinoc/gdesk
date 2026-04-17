@@ -2,18 +2,16 @@ import { NextResponse } from 'next/server'
 import { clickupClient } from '@/lib/clickup/client'
 
 export async function GET() {
-  const teamId = process.env.CLICKUP_TEAM_ID
-  if (!teamId) return NextResponse.json({ members: [] })
-
   try {
-    const data = await clickupClient.get(`/group?team_id=${teamId}`)
+    const data = await clickupClient.get('/team')
     const seen = new Set<number>()
     const members: { id: string; name: string; email: string }[] = []
-    for (const group of data.groups ?? []) {
-      for (const m of group.members ?? []) {
-        if (!seen.has(m.id)) {
-          seen.add(m.id)
-          members.push({ id: String(m.id), name: m.username, email: m.email ?? '' })
+    for (const team of data.teams ?? []) {
+      for (const m of team.members ?? []) {
+        const u = m.user ?? m
+        if (!seen.has(u.id)) {
+          seen.add(u.id)
+          members.push({ id: String(u.id), name: u.username ?? u.email, email: u.email ?? '' })
         }
       }
     }
