@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
   }
 
   const listId = auth.role === 'admin'
-    ? (queryListId ?? process.env.CLICKUP_LIST_ID!)
+    ? (queryListId ?? auth.clickupListId ?? process.env.CLICKUP_LIST_ID!)
     : auth.clickupListId!
 
   try {
