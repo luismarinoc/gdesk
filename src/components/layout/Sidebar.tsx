@@ -130,8 +130,8 @@ export function Sidebar({ locale, userRole, userFullName, permissions }: Sidebar
         {/* Gestión de Tickets */}
         {can('tickets') && navItem(`/${locale}/tickets`, <TicketCheck className="w-4 h-4" />, 'Gestión de Tickets')}
 
-        {/* Nueva Solicitud */}
-        {can('tickets') && navItem(`/${locale}/tickets/new`, <Ticket className="w-4 h-4" />, 'Nueva Solicitud')}
+        {/* Nueva Solicitud — solo clientes y admins */}
+        {userRole !== 'agent' && can('tickets') && navItem(`/${locale}/tickets/new`, <Ticket className="w-4 h-4" />, 'Nueva Solicitud')}
 
         {/* Usuarios (admin) */}
         {userRole === 'admin' && navItem(`/${locale}/users`, <Users className="w-4 h-4" />, 'Usuarios')}

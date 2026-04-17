@@ -18,6 +18,7 @@ function TicketsPageInner() {
   const month = searchParams.get('month') ?? 'all'
 
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isAgent, setIsAgent] = useState(false)
   const [adminList, setAdminList] = useState<{ id: string; name: string } | null>(null)
   const [showSelector, setShowSelector] = useState(false)
   const [ready, setReady] = useState(false)
@@ -27,6 +28,7 @@ function TicketsPageInner() {
       .then(r => r.json())
       .then(data => {
         const role = data.user?.role
+        if (role === 'agent') setIsAgent(true)
         if (role === 'admin') {
           setIsAdmin(true)
           const saved = localStorage.getItem(ADMIN_LIST_KEY)
@@ -74,9 +76,11 @@ function TicketsPageInner() {
           </div>
           <div className="flex items-center gap-3">
             <MonthSelect value={month} />
-            <Link href={`/${locale}/tickets/new`}>
-              <Button>{t('new')}</Button>
-            </Link>
+            {!isAgent && (
+              <Link href={`/${locale}/tickets/new`}>
+                <Button>{t('new')}</Button>
+              </Link>
+            )}
           </div>
         </div>
         {error === 'NO_LIST_ASSIGNED' && (
