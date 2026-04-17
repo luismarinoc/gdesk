@@ -31,7 +31,7 @@ export function clickupRichCommentToHtml(parts: any[]): string {
   let html = ''
 
   for (const part of parts) {
-    const text: string = part.text ?? ''
+    const text: string = typeof part.text === 'string' ? part.text : ''
     const attrs = part.attributes ?? {}
 
     // ClickUp image node: { type: "image", image: { url, name, ... } }
