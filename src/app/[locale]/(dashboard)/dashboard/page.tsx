@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { unstable_cache } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { listTickets } from '@/services/clickup-ticket.service'
@@ -33,10 +34,14 @@ export default async function DashboardPage({
     .eq('id', user!.id)
     .single()
 
+  const role = profile?.role ?? 'client'
+  const permissions: string[] = profile?.permissions ?? []
+  const canDashboard = role === 'admin' || permissions.includes('dashboard')
+  if (!canDashboard) redirect(`/${locale}/tickets`)
+
   const firstName = (profile?.full_name ?? user?.email ?? '').split(' ')[0]
   const listId = profile?.clickup_list_id ?? process.env.CLICKUP_LIST_ID!
-  const permissions: string[] = profile?.permissions ?? []
-  const ownOnly = profile?.role !== 'admin' && permissions.includes('own_tickets_only') && !!profile?.clickup_user_name
+  const ownOnly = role !== 'admin' && permissions.includes('own_tickets_only') && !!profile?.clickup_user_name
 
   let allTickets: GDeskTicket[] = []
   try {

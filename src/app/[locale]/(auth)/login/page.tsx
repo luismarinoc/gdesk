@@ -29,7 +29,18 @@ export default function LoginPage({ params }: { params: Promise<{ locale: string
       setLoading(false)
       return
     }
-    router.push(`/${locale}/dashboard`)
+    // Redirect to first permitted route
+    const me = await fetch('/api/auth/me').then(r => r.json())
+    const role  = me.user?.role ?? 'client'
+    const perms: string[] = me.user?.permissions ?? []
+    const route =
+      role === 'admin'               ? 'dashboard' :
+      perms.includes('dashboard')    ? 'dashboard' :
+      perms.includes('kanban')       ? 'kanban'    :
+      perms.includes('reports')      ? 'reports'   :
+      perms.includes('workload')     ? 'workload'  :
+      'tickets'
+    router.push(`/${locale}/${route}`)
     router.refresh()
   }
 
