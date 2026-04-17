@@ -116,13 +116,14 @@ export function Sidebar({ locale, userRole, userFullName, permissions }: Sidebar
         </p>
 
         {/* Dashboard expandible */}
-        {can('dashboard') && navItem(`/${locale}/dashboard`, <LayoutDashboard className="w-4 h-4" />, 'Dashboard', true, dashOpen, () => setDashOpen(v => !v))}
-        {can('dashboard') && dashOpen && (
+        {(can('dashboard') || can('kanban') || can('reports') || can('workload')) &&
+          navItem(`/${locale}/dashboard`, <LayoutDashboard className="w-4 h-4" />, 'Dashboard', true, dashOpen, () => setDashOpen(v => !v))}
+        {(can('dashboard') || can('kanban') || can('reports') || can('workload')) && dashOpen && (
           <div className="ml-6 border-l border-gray-100 pl-3 space-y-0.5 mb-1">
-            {subItem(`/${locale}/dashboard`, 'Overview')}
-            {subItem(`/${locale}/kanban`, 'Kanban')}
-            {subItem(`/${locale}/reports`, 'Reportes')}
-            {subItem(`/${locale}/workload`, 'Carga de Trabajo')}
+            {can('dashboard') && subItem(`/${locale}/dashboard`, 'Overview')}
+            {can('kanban') && subItem(`/${locale}/kanban`, 'Kanban')}
+            {can('reports') && subItem(`/${locale}/reports`, 'Reportes')}
+            {can('workload') && subItem(`/${locale}/workload`, 'Carga de Trabajo')}
           </div>
         )}
 

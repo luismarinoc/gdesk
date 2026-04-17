@@ -25,7 +25,9 @@ export default async function DashboardLayout({
 
   const fullName = profile?.full_name ?? user.email ?? ''
   const role = profile?.role ?? 'client'
-  const permissions: string[] = role === 'admin' ? ['dashboard', 'tickets'] : (profile?.permissions ?? ['tickets'])
+  const permissions: string[] = role === 'admin'
+    ? ['dashboard', 'kanban', 'reports', 'workload', 'tickets']
+    : (profile?.permissions ?? ['tickets'])
   const noListAssigned = role !== 'admin' && !profile?.clickup_list_id
 
   if (noListAssigned) {

@@ -19,13 +19,15 @@ async function requireAuth() {
   if (!user) return null
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('role, clickup_list_id')
+    .select('role, clickup_list_id, clickup_user_name, permissions')
     .eq('id', user.id)
     .single()
   return {
     user,
     role: (profile?.role ?? 'client') as UserRole,
     clickupListId: profile?.clickup_list_id ?? null,
+    clickupUserName: profile?.clickup_user_name ?? null,
+    permissions: (profile?.permissions ?? []) as string[],
   }
 }
 
@@ -45,7 +47,11 @@ export async function GET(req: NextRequest) {
     : auth.clickupListId!
 
   try {
-    const tickets = await getCachedTickets(listId)
+    let tickets = await getCachedTickets(listId)
+    // Si el usuario tiene own_tickets_only, filtrar por su nombre de ClickUp
+    if (auth.role !== 'admin' && auth.permissions.includes('own_tickets_only') && auth.clickupUserName) {
+      tickets = tickets.filter(t => t.assignedTo === auth.clickupUserName)
+    }
     return NextResponse.json({ tickets })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })

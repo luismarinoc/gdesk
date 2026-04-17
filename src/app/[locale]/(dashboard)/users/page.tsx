@@ -4,8 +4,12 @@ import { use, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 const MODULES = [
-  { key: 'dashboard', label: 'Dashboard' },
+  { key: 'dashboard', label: 'Dashboard (Overview)' },
+  { key: 'kanban', label: 'Kanban' },
+  { key: 'reports', label: 'Reportes' },
+  { key: 'workload', label: 'Carga de Trabajo' },
   { key: 'tickets', label: 'Gestión de Tickets' },
+  { key: 'own_tickets_only', label: '🔒 Solo sus tickets' },
 ]
 
 type UserProfile = {

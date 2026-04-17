@@ -12,7 +12,7 @@ export async function GET() {
     .single()
   const role = profile?.role ?? 'client'
   const permissions: string[] = role === 'admin'
-    ? ['dashboard', 'tickets']
+    ? ['dashboard', 'kanban', 'reports', 'workload', 'tickets']
     : (profile?.permissions ?? ['tickets'])
   return NextResponse.json({
     user: {
