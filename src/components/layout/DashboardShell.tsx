@@ -42,10 +42,7 @@ export function DashboardShell({ locale, userFullName, userRole, permissions, ch
   }
 
   return (
-    <div
-      className="flex min-h-screen bg-[#F7F9FB] relative"
-      style={isMobile ? {} : { minWidth: '1280px', zoom: 1.25 }}
-    >
+    <div className="dashboard-root flex min-h-screen bg-[#F7F9FB] relative">
       {/* Mobile backdrop */}
       {isMobile && sidebarOpen && (
         <div
