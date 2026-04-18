@@ -236,10 +236,6 @@ export function TicketDetail({ ticket, loading }: TicketDetailProps) {
       const data = await res.json().catch(() => ({}))
       if (res.ok && data.ok) {
         setLocalAttachments(prev => prev.filter(a => a.id !== attId))
-        if (data.alreadyGone) {
-          setUploadMsg({ ok: true, text: 'El adjunto ya no existía en ClickUp.' })
-          setTimeout(() => setUploadMsg(null), 3000)
-        }
       } else {
         setUploadMsg({ ok: false, text: 'No se pudo eliminar el adjunto en ClickUp.' })
         setTimeout(() => setUploadMsg(null), 4000)

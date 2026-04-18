@@ -19,10 +19,6 @@ export async function DELETE(
   } catch (err: unknown) {
     const msg = String(err)
     console.error('[DELETE attachment] ClickUp error:', msg)
-    // Solo tratamos 404 como "ya no existe" — eliminamos de vista pero informamos
-    if (msg.includes('404') || msg.includes('not found')) {
-      return NextResponse.json({ ok: true, notFound: true, alreadyGone: true })
-    }
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
