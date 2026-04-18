@@ -61,11 +61,25 @@ export default function LoginPage({ params }: { params: Promise<{ locale: string
         <div className="relative z-10 space-y-4">
           <p className="text-xs font-semibold tracking-widest text-teal-300 uppercase">Portal de soporte</p>
           <h1 className="text-4xl font-bold text-white leading-tight">
-            Gestiona tus<br />tickets de soporte
+            Resuelve incidentes<br />en minutos, no días
           </h1>
           <p className="text-blue-200 text-sm leading-relaxed max-w-xs">
-            Accede a tu portal de atención al cliente de GPartner Consulting.
+            Portal exclusivo de atención al cliente de GPartner Consulting. Seguimiento en tiempo real de cada solicitud.
           </p>
+          <div className="pt-2 space-y-2">
+            <div className="flex items-center gap-2 text-blue-100 text-xs">
+              <div className="w-1 h-1 rounded-full bg-teal-400 flex-shrink-0" />
+              Soporte dedicado en módulos SAP
+            </div>
+            <div className="flex items-center gap-2 text-blue-100 text-xs">
+              <div className="w-1 h-1 rounded-full bg-teal-400 flex-shrink-0" />
+              Historial completo de tickets
+            </div>
+            <div className="flex items-center gap-2 text-blue-100 text-xs">
+              <div className="w-1 h-1 rounded-full bg-teal-400 flex-shrink-0" />
+              Acceso seguro con cifrado SSL
+            </div>
+          </div>
         </div>
 
         <div className="relative z-10 flex items-center gap-2">
@@ -105,9 +119,14 @@ export default function LoginPage({ params }: { params: Promise<{ locale: string
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                {t('password')}
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                  {t('password')}
+                </Label>
+                <Link href={`/${locale}/forgot-password`} className="text-xs text-[#1B3A6B] hover:underline">
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -132,10 +151,18 @@ export default function LoginPage({ params }: { params: Promise<{ locale: string
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-11 rounded-lg text-sm font-semibold text-white transition-all disabled:opacity-60"
-              style={{ background: loading ? '#1B3A6B99' : 'linear-gradient(135deg, #1B3A6B, #0e6e6e)' }}
+              className="w-full h-11 rounded-lg text-sm font-semibold text-white transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+              style={{ background: 'linear-gradient(135deg, #1B3A6B, #0e6e6e)' }}
             >
-              {loading ? 'Ingresando...' : t('login')}
+              {loading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Verificando...
+                </>
+              ) : t('login')}
             </button>
 
             <p className="text-sm text-center text-gray-500">

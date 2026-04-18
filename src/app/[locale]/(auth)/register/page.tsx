@@ -117,6 +117,22 @@ export default function RegisterPage({ params }: { params: Promise<{ locale: str
               placeholder="Mínimo 8 caracteres"
               className="h-11 bg-gray-50 border-gray-200 focus:border-[#1B3A6B] focus:ring-[#1B3A6B]"
             />
+            {password.length > 0 && (
+              <ul className="space-y-1 mt-1">
+                {[
+                  { label: 'Mínimo 8 caracteres', valid: password.length >= 8 },
+                  { label: 'Una mayúscula (A-Z)', valid: /[A-Z]/.test(password) },
+                  { label: 'Un número (0-9)', valid: /[0-9]/.test(password) },
+                ].map(r => (
+                  <li key={r.label} className={`flex items-center gap-1.5 text-xs ${r.valid ? 'text-teal-600' : 'text-gray-400'}`}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      {r.valid ? <polyline points="20 6 9 17 4 12" /> : <line x1="18" y1="6" x2="6" y2="18" />}
+                    </svg>
+                    {r.label}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {error && (

@@ -5,7 +5,7 @@ import { routing } from '@/i18n/routing'
 
 const intlMiddleware = createIntlMiddleware(routing)
 
-const PUBLIC_PATHS = ['/login', '/register']
+const PUBLIC_PATHS = ['/login', '/register', '/forgot-password', '/reset-password']
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
