@@ -475,7 +475,6 @@ export function TicketDetail({ ticket, loading }: TicketDetailProps) {
                     <AttachmentCard
                       key={att.id}
                       att={att}
-                      onDelete={handleDeleteAttachment}
                     />
                   ))}
                 </div>
@@ -486,7 +485,6 @@ export function TicketDetail({ ticket, loading }: TicketDetailProps) {
                       key={att.id}
                       att={att}
                       listMode
-                      onDelete={handleDeleteAttachment}
                     />
                   ))}
                 </div>
