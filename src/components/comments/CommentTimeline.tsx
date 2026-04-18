@@ -12,20 +12,28 @@ function normalize(s: string) {
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 }
 
-export function CommentTimeline({ ticketId }: { ticketId: string }) {
-  const { comments, loading, error, currentUserName, addComment, deleteComment } = useComments(ticketId)
+export function CommentTimeline({ ticketId, onImagesAttached, onRefreshReady }: { ticketId: string; onImagesAttached?: (attachments: import('@/types').GDeskAttachment[]) => void; onRefreshReady?: (refresh: () => void) => void }) {
+  const { comments, loading, error, currentUserName, addComment, deleteComment, updateReplyCount, refresh } = useComments(ticketId)
+
+  useEffect(() => {
+    onRefreshReady?.(refresh)
+  }, [refresh, onRefreshReady])
   const [threadComment, setThreadComment] = useState<GDeskComment | null>(null)
   const [replies, setReplies] = useState<GDeskComment[]>([])
   const [repliesLoading, setRepliesLoading] = useState(false)
-  const bottomRef = useRef<HTMLDivElement>(null)
-  const threadBottomRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  const threadListRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!threadComment) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (!threadComment && listRef.current) {
+      listRef.current.scrollTop = listRef.current.scrollHeight
+    }
   }, [comments.length, threadComment])
 
   useEffect(() => {
-    threadBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (threadListRef.current) {
+      threadListRef.current.scrollTop = threadListRef.current.scrollHeight
+    }
   }, [replies.length])
 
   const fetchReplies = useCallback(async (commentId: string): Promise<GDeskComment[]> => {
@@ -55,19 +63,27 @@ export function CommentTimeline({ ticketId }: { ticketId: string }) {
   }
 
   async function handleMainSubmit(content: string) {
-    await addComment(content)
+    await addComment(content, undefined, onImagesAttached)
   }
 
   async function handleThreadSubmit(content: string) {
     await addComment(content, threadComment!.id)
     const updatedReplies = await fetchReplies(threadComment!.id)
-    setThreadComment(prev => prev ? { ...prev, replyCount: updatedReplies.length } : prev)
+    const newCount = updatedReplies.length
+    setThreadComment(prev => prev ? { ...prev, replyCount: newCount } : prev)
+    updateReplyCount(threadComment!.id, newCount)
   }
 
   async function handleDeleteReply(commentId: string) {
     await deleteComment(commentId)
-    setReplies(prev => prev.filter(r => r.id !== commentId))
-    setThreadComment(prev => prev ? { ...prev, replyCount: Math.max(0, (prev.replyCount || 1) - 1) } : prev)
+    const parentId = threadComment?.id
+    setReplies(prev => {
+      const updated = prev.filter(r => r.id !== commentId)
+      const newCount = updated.length
+      setThreadComment(tc => tc ? { ...tc, replyCount: newCount } : tc)
+      if (parentId) updateReplyCount(parentId, newCount)
+      return updated
+    })
   }
 
   const wrapperClass = "flex flex-col flex-1 min-h-0 overflow-hidden"
@@ -90,7 +106,7 @@ export function CommentTimeline({ ticketId }: { ticketId: string }) {
             Hilo de {threadComment.author}
           </span>
         </div>
-        <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
+        <div ref={threadListRef} className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
           <CommentItem
             comment={threadComment}
             isOwner={!!currentUserName && normalize(threadComment.author) === normalize(currentUserName)}
@@ -107,7 +123,6 @@ export function CommentTimeline({ ticketId }: { ticketId: string }) {
               ))}
             </div>
           )}
-          <div ref={threadBottomRef} />
         </div>
         <div className="border-t border-gray-200 bg-white flex-shrink-0">
           <CommentEditor onSubmit={handleThreadSubmit} placeholder="Responder al comentario..." />
@@ -119,7 +134,7 @@ export function CommentTimeline({ ticketId }: { ticketId: string }) {
   /* ── Main view ── */
   return (
     <div className={wrapperClass}>
-      <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
+      <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
         {loading ? (
           Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-20 w-full" />
@@ -141,7 +156,6 @@ export function CommentTimeline({ ticketId }: { ticketId: string }) {
           })
         )}
         {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
-        <div ref={bottomRef} />
       </div>
       <div className="border-t border-gray-200 bg-white flex-shrink-0">
         <CommentEditor onSubmit={handleMainSubmit} />

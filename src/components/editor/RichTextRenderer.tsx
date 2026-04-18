@@ -11,7 +11,8 @@ interface RichTextRendererProps {
 
 export function RichTextRenderer({ html, className }: RichTextRendererProps) {
   const sanitized = useMemo(() => DOMPurify.sanitize(html, {
-    ADD_ATTR: ['style'],
+    ADD_ATTR: ['style', 'title'],
+    ADD_TAGS: ['figure', 'figcaption'],
     FORCE_BODY: false,
   }), [html])
   return (

@@ -41,15 +41,63 @@ export function useComments(ticketId: string) {
     fetchComments()
   }, [fetchComments])
 
-  async function addComment(content: string, parentCommentId?: string) {
+  async function addComment(
+    content: string,
+    parentCommentId?: string,
+    onImagesAttached?: (attachments: import('@/types').GDeskAttachment[]) => void,
+  ) {
     try {
+      const commentIndex = parentCommentId ? undefined : comments.length + 1
       const res = await fetch(`/api/clickup/tickets/${ticketId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, parentCommentId }),
+        body: JSON.stringify({ content, parentCommentId, commentIndex }),
       })
-      if (!res.ok) throw new Error('Failed to add comment')
-      await fetchComments()
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody.error ?? 'Failed to add comment')
+      }
+      const data = await res.json()
+      const newComment: GDeskComment = {
+        ...data.comment,
+        author: data.comment.author || currentUserName || '?',
+        content,
+        createdAt: data.comment.createdAt instanceof Date && !isNaN(data.comment.createdAt.getTime())
+          ? data.comment.createdAt
+          : new Date(),
+      }
+      if (!parentCommentId) {
+        // Upload embedded images as ClickUp attachments with label "Imagen X.Y"
+        if (onImagesAttached) {
+          const commentIndex = comments.length + 1
+          const imgMatches = [...content.matchAll(/<img[^>]+src="([^"]+)"/g)]
+          if (imgMatches.length > 0) {
+            const created: import('@/types').GDeskAttachment[] = []
+            await Promise.all(imgMatches.map(async (m, i) => {
+              const url = m[1]
+              const name = `Imagen ${commentIndex}.${i + 1}`
+              const form = new FormData()
+              form.append('fromUrl', url)
+              form.append('name', `${name}.png`)
+              try {
+                const attRes = await fetch(`/api/clickup/tickets/${ticketId}/attachments`, { method: 'POST', body: form })
+                if (attRes.ok) {
+                  const attData = await attRes.json()
+                  const att = attData.attachment
+                  created.push({
+                    id: att.id ?? String(Date.now() + i),
+                    name,
+                    url: att.url_w_host ?? att.url ?? url,
+                    mimeType: 'image/png',
+                  })
+                }
+              } catch { /* silencioso — el comentario ya se subió */ }
+            }))
+            if (created.length > 0) onImagesAttached(created)
+          }
+        }
+        setComments(prev => [...prev, newComment])
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
       throw err
@@ -71,5 +119,9 @@ export function useComments(ticketId: string) {
     }
   }
 
-  return { comments, loading, error, currentUserName, addComment, deleteComment }
+  function updateReplyCount(commentId: string, count: number) {
+    setComments(prev => prev.map(c => c.id === commentId ? { ...c, replyCount: count } : c))
+  }
+
+  return { comments, loading, error, currentUserName, addComment, deleteComment, updateReplyCount, refresh: fetchComments }
 }

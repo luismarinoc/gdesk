@@ -110,6 +110,16 @@ export async function deleteComment(commentId: string): Promise<void> {
   await clickupClient.delete(`/comment/${commentId}`)
 }
 
+async function uploadImageToClickup(taskId: string, url: string, name: string): Promise<string> {
+  const imgRes = await fetch(url)
+  if (!imgRes.ok) return url
+  const blob = await imgRes.blob()
+  const formData = new FormData()
+  formData.append('attachment', blob, name)
+  const data = await clickupClient.postFormData(`/task/${taskId}/attachment`, formData)
+  return (data?.url as string) ?? url
+}
+
 export async function createComment(
   ticketId: string,
   input: CreateCommentInput
@@ -122,8 +132,23 @@ export async function createComment(
   const body: Record<string, unknown> = { notify_all: false }
 
   if (hasImages) {
-    body.comment = htmlToClickupNodes(input.content)
-    body.comment_text = htmlToPlainText(input.content)
+    const nodes = htmlToClickupNodes(input.content)
+    // Replace Supabase URLs with ClickUp CDN URLs and insert label after each image
+    let imgCount = 0
+    const uploadedNodes: ClickupDocNode[] = []
+    for (const node of nodes) {
+      if ('type' in node && node.type === 'image' && node.image?.url) {
+        imgCount++
+        const clickupUrl = await uploadImageToClickup(ticketId, node.image.url, node.image.name)
+        uploadedNodes.push({ ...node, image: { ...node.image, url: clickupUrl } })
+        if (input.commentIndex) {
+          uploadedNodes.push({ text: `Imagen ${input.commentIndex}.${imgCount}`, attributes: { italic: true } })
+        }
+      } else {
+        uploadedNodes.push(node)
+      }
+    }
+    body.comment = uploadedNodes
   } else {
     body.comment_text = htmlToPlainText(input.content)
   }

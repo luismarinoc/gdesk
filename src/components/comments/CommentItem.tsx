@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { RichTextRenderer } from '@/components/editor/RichTextRenderer'
 import type { GDeskComment } from '@/types'
 
@@ -37,7 +37,7 @@ function parseAuthorPrefix(content: string): { author: string | null; body: stri
   const author = match[1].trim()
   const bodyText = match[2].trim()
   // Reconstruir el HTML sin el prefijo
-  const prefixPattern = new RegExp(author.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ':\\s*')
+  const prefixPattern = new RegExp(author.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ':\\s*', 'g')
   const body = content.replace(prefixPattern, '')
   return { author, body }
 }
@@ -53,9 +53,10 @@ export function CommentItem({
   isOwner?: boolean
   onDelete?: (id: string) => void
 }) {
-  const [confirming, setConfirming] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   const { author: prefixAuthor, body: cleanContent } = parseAuthorPrefix(comment.content ?? '')
   const displayAuthor = prefixAuthor ?? comment.author
@@ -64,8 +65,19 @@ export function CommentItem({
   const initials = getInitials(displayAuthor)
   const bg = avatarColor(displayAuthor)
 
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [menuOpen])
+
   async function handleDelete() {
-    if (!confirming) { setConfirming(true); return }
+    setMenuOpen(false)
     setDeleting(true)
     setDeleteError(false)
     try {
@@ -75,12 +87,11 @@ export function CommentItem({
       setTimeout(() => setDeleteError(false), 3000)
     } finally {
       setDeleting(false)
-      setConfirming(false)
     }
   }
 
   return (
-    <div className="border border-gray-100 rounded-lg bg-white overflow-hidden">
+    <div className="border border-gray-200 rounded-xl bg-white overflow-hidden shadow-sm">
       {/* Header */}
       <div className="flex items-center gap-2.5 px-4 pt-3 pb-2">
         <div
@@ -94,37 +105,35 @@ export function CommentItem({
           <span className="text-xs text-gray-400 whitespace-nowrap">{formatDate(comment.createdAt)}</span>
         </div>
         {isOwner && (
-          <div className="flex items-center gap-1 flex-shrink-0">
-            {confirming && (
-              <span className="text-xs text-gray-400 mr-1">¿Eliminar?</span>
-            )}
+          <div ref={menuRef} className="relative flex-shrink-0">
             <button
-              onClick={handleDelete}
+              onClick={() => setMenuOpen(v => !v)}
               disabled={deleting}
-              title={confirming ? 'Confirmar eliminación' : 'Eliminar comentario'}
-              className={`p-1 rounded transition-colors ${
-                confirming
-                  ? 'text-red-500 hover:text-red-700 hover:bg-red-50'
-                  : 'text-gray-300 hover:text-red-400 hover:bg-gray-50'
-              }`}
+              className="p-1.5 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-colors"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                <path d="M10 11v6"/><path d="M14 11v6"/>
-                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-              </svg>
-            </button>
-            {confirming && (
-              <button
-                onClick={() => setConfirming(false)}
-                className="p-1 rounded text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors"
-                title="Cancelar"
-              >
+              {deleting ? (
+                <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+              ) : (
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                  <circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
                 </svg>
-              </button>
+              )}
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px]">
+                <button
+                  onClick={handleDelete}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                    <path d="M10 11v6"/><path d="M14 11v6"/>
+                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                  </svg>
+                  Eliminar comentario
+                </button>
+              </div>
             )}
           </div>
         )}

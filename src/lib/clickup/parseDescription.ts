@@ -30,14 +30,26 @@ export function clickupRichCommentToHtml(parts: any[]): string {
 
   let html = ''
 
-  for (const part of parts) {
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i]
     const text: string = typeof part.text === 'string' ? part.text : ''
     const attrs = part.attributes ?? {}
 
     // ClickUp image node: { type: "image", image: { url, name, ... } }
     if (part.type === 'image' && part.image?.url) {
       const proxyUrl = `/api/clickup/attachment?url=${encodeURIComponent(part.image.url)}`
-      html += `<img src="${proxyUrl}" alt="${part.image.name ?? 'imagen'}" style="max-width:320px;width:100%;border-radius:6px;margin:6px 0;display:block;border:1px solid #e5e7eb;" />`
+      // Check if the next node is a confirmed label ("Imagen X.Y")
+      const nextPart = parts[i + 1]
+      const nextText: string = typeof nextPart?.text === 'string' ? nextPart.text : ''
+      if (/^Imagen \d+\.\d+$/.test(nextText)) {
+        i++ // consume the label node
+        html += `<figure style="display:inline-block;margin:4px 0 2px;">`
+             + `<img src="${proxyUrl}" alt="${nextText}" title="${nextText}" style="max-width:320px;width:100%;border-radius:6px;display:block;border:1px solid #e5e7eb;" />`
+             + `<figcaption style="font-size:11px;color:#9ca3af;text-align:center;margin-top:3px;">${nextText}</figcaption>`
+             + `</figure>`
+      } else {
+        html += `<img src="${proxyUrl}" alt="${part.image.name ?? 'imagen'}" style="max-width:320px;width:100%;border-radius:6px;margin:6px 0;display:block;border:1px solid #e5e7eb;" />`
+      }
       continue
     }
 

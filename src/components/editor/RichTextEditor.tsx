@@ -16,10 +16,12 @@ interface RichTextEditorProps {
   onChange?: (html: string) => void
   hideToolbar?: boolean
   minHeight?: string
+  borderless?: boolean
 }
 
-export function RichTextEditor({ content = '', placeholder, onChange, hideToolbar = false, minHeight = '120px' }: RichTextEditorProps) {
+export function RichTextEditor({ content = '', placeholder, onChange, hideToolbar = false, minHeight = '120px', borderless = false }: RichTextEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const imgCountRef = useRef(0)
 
   async function uploadAndInsertImage(file: File, editorInstance: ReturnType<typeof useEditor>) {
     if (!editorInstance) return
@@ -29,7 +31,8 @@ export function RichTextEditor({ content = '', placeholder, onChange, hideToolba
     const res = await fetch('/api/storage/upload', { method: 'POST', body: formData })
     if (!res.ok) return
     const { url } = await res.json()
-    editorInstance.chain().focus().setImage({ src: url }).run()
+    imgCountRef.current += 1
+    editorInstance.chain().focus().setImage({ src: url, title: `Imagen ${imgCountRef.current}` }).run()
   }
 
   const editor = useEditor({
@@ -75,14 +78,15 @@ export function RichTextEditor({ content = '', placeholder, onChange, hideToolba
     const res = await fetch('/api/storage/upload', { method: 'POST', body: formData })
     if (!res.ok) return
     const { url } = await res.json()
-    editor.chain().focus().setImage({ src: url }).run()
+    imgCountRef.current += 1
+    editor.chain().focus().setImage({ src: url, title: `Imagen ${imgCountRef.current}` }).run()
     e.target.value = ''
   }
 
   if (!editor) return null
 
   return (
-    <div className="border rounded-md overflow-hidden">
+    <div className={borderless ? 'overflow-hidden' : 'border rounded-md overflow-hidden'}>
       {!hideToolbar && <EditorToolbar editor={editor} onImageUpload={handleImageUpload} />}
       <EditorContent
         editor={editor}
