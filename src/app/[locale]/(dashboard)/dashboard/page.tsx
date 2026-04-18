@@ -15,33 +15,37 @@ function getCachedTickets(listId: string) {
 import type { GDeskTicket } from '@/types'
 import { SatisfactionDonut, TicketsBarChart } from '@/components/dashboard/DashboardCharts'
 import { MonthSelect } from '@/components/shared/MonthSelect'
+import { DashboardListSwitcher } from '@/components/dashboard/DashboardListSwitcher'
 
 export default async function DashboardPage({
   params,
   searchParams,
 }: {
   params: Promise<{ locale: string }>
-  searchParams: Promise<{ month?: string }>
+  searchParams: Promise<{ month?: string; list?: string; listName?: string }>
 }) {
   const { locale } = await params
-  const { month } = await searchParams
+  const { month, list: listParam, listName: listNameParam } = await searchParams
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('full_name, role, clickup_list_id, clickup_user_name, permissions')
+    .select('full_name, role, clickup_list_id, clickup_list_ids, clickup_user_name, permissions')
     .eq('id', user!.id)
     .single()
 
   const role = profile?.role ?? 'client'
+  const isAdmin = role === 'admin'
   const permissions: string[] = profile?.permissions ?? []
-  const canDashboard = role === 'admin' || permissions.includes('dashboard')
+  const canDashboard = isAdmin || permissions.includes('dashboard')
   if (!canDashboard) redirect(`/${locale}/tickets`)
 
   const firstName = (profile?.full_name ?? user?.email ?? '').split(' ')[0]
-  const listId = profile?.clickup_list_id ?? process.env.CLICKUP_LIST_ID!
-  const ownOnly = role !== 'admin' && permissions.includes('own_tickets_only') && !!profile?.clickup_user_name
+  const defaultListId = profile?.clickup_list_id ?? process.env.CLICKUP_LIST_ID!
+  const listId = listParam ?? defaultListId
+  const clickupListIds: string[] = profile?.clickup_list_ids ?? (profile?.clickup_list_id ? [profile.clickup_list_id] : [])
+  const ownOnly = !isAdmin && permissions.includes('own_tickets_only') && !!profile?.clickup_user_name
 
   let allTickets: GDeskTicket[] = []
   try {
@@ -169,7 +173,17 @@ export default async function DashboardPage({
       {/* Welcome + month selector */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">¡Bienvenido, {firstName}!</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-gray-900">¡Bienvenido, {firstName}!</h1>
+            <Suspense fallback={null}>
+              <DashboardListSwitcher
+                isAdmin={isAdmin}
+                clickupListIds={clickupListIds}
+                activeListId={listId}
+                activeListName={listNameParam}
+              />
+            </Suspense>
+          </div>
           <p className="text-sm text-gray-500 mt-1">
             Panel de monitoreo de soporte — GPartner Consulting
             {selectedMonthLabel && (
