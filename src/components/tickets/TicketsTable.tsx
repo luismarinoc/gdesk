@@ -30,6 +30,7 @@ export function TicketsTable({ tickets, loading, monthFilter = 'all' }: TicketsT
   const searchParams = useSearchParams()
   const q = searchParams.get('q')?.toLowerCase() ?? ''
   const assignee = searchParams.get('assignee') ?? ''
+  const statusFilter = searchParams.get('status') ?? ''
 
   const filtered = useMemo(() => {
     return tickets
@@ -40,6 +41,7 @@ export function TicketsTable({ tickets, loading, monthFilter = 'all' }: TicketsT
         return v === monthFilter
       })
       .filter(t => !assignee || t.assignedTo === assignee)
+      .filter(t => !statusFilter || t.status === statusFilter)
       .filter(t =>
         !q ||
         t.title.toLowerCase().includes(q) ||
@@ -48,7 +50,7 @@ export function TicketsTable({ tickets, loading, monthFilter = 'all' }: TicketsT
         t.priority.toLowerCase().includes(q) ||
         t.status.toLowerCase().includes(q)
       )
-  }, [tickets, monthFilter, assignee, q])
+  }, [tickets, monthFilter, assignee, statusFilter, q])
 
   const columns = useMemo<ColumnDef<GDeskTicket>[]>(() => [
     {

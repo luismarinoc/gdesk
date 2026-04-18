@@ -64,6 +64,14 @@ export function mapClickupTaskToTicket(task: any): GDeskTicket {
     timeSpent: task.time_spent ?? null,
     clickupUrl: task.url ?? null,
     watchers: (task.watchers ?? []).map((w: Record<string, string>) => w.username).filter(Boolean),
+    attachments: (task.attachments ?? []).map((a: Record<string, string>) => ({
+      id: a.id,
+      name: a.title ?? a.id,
+      url: a.url_w_host ?? a.url ?? '',
+      mimeType: '',
+      sizeBytes: 0,
+      uploadedAt: new Date(parseInt(a.date) || Date.now()),
+    })),
   }
 }
 

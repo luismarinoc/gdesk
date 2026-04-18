@@ -109,7 +109,11 @@ export default async function DashboardPage({
     if (t.status === 'cerrado' || t.status === 'resolved' || t.status === 'closed') agentMap[a].cerrado++
   })
   const topAgents = Object.entries(agentMap)
-    .sort((a, b) => b[1].total - a[1].total)
+    .sort(([a], [b]) => {
+      if (a === 'Sin asignar') return 1
+      if (b === 'Sin asignar') return -1
+      return a.localeCompare(b)
+    })
     .slice(0, 10)
     .map(([name, stats]) => ({ name, ...stats }))
 
@@ -214,79 +218,82 @@ export default async function DashboardPage({
         })}
       </div>
 
-      {/* Donut + Agent table */}
+      {/* 4 panels — unified 2×2 grid, all same height */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-xl card-shadow p-4 flex flex-col">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="text-sm font-semibold text-gray-700">Distribución de Tickets</h2>
-            <Link href={`/${locale}/tickets`} className="text-xs text-[#1B3A6B] hover:underline">Ver más</Link>
+
+        {/* Distribución de Tickets */}
+        <div className="bg-white rounded-xl card-shadow p-4 flex flex-col" style={{ height: '420px' }}>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-semibold text-gray-700">Distribución de Tickets</h2>
+            <Link href={`/${locale}/tickets`} className="text-sm text-[#1B3A6B] hover:underline">Ver más</Link>
           </div>
-          <SatisfactionDonut data={donutData.length > 0 ? donutData : [{ name: 'Sin tickets', value: 1 }]} />
+          <div className="flex-1 min-h-0 flex flex-col">
+            <SatisfactionDonut data={donutData.length > 0 ? donutData : [{ name: 'Sin tickets', value: 1 }]} />
+          </div>
         </div>
 
-        <div className="bg-white rounded-xl card-shadow p-4 flex flex-col">
-          <h2 className="text-sm font-semibold text-gray-700 mb-2">Tickets por Agente</h2>
-          <div className="overflow-y-auto" style={{ maxHeight: 240 }}>
+        {/* Tickets por Agente */}
+        <div className="bg-white rounded-xl card-shadow p-4 flex flex-col" style={{ height: '420px' }}>
+          <h2 className="text-lg font-semibold text-gray-700 mb-3">Tickets por Agente</h2>
+          <div className="flex-1 overflow-y-auto min-h-0">
             {topAgents.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-4">Sin tickets asignados</p>
+              <p className="text-base text-gray-400 text-center py-4">Sin tickets asignados</p>
             ) : (
-              <table className="w-full text-xs">
+              <table className="w-full text-base">
                 <thead className="sticky top-0 bg-white">
-                  <tr className="text-gray-400 uppercase tracking-wider border-b">
-                    <th className="text-left pb-1.5">Agente</th>
-                    <th className="text-right pb-1.5">Total</th>
-                    <th className="text-right pb-1.5" style={{ color: '#787486' }}>BL</th>
-                    <th className="text-right pb-1.5" style={{ color: '#e11d48' }}>LT</th>
-                    <th className="text-right pb-1.5" style={{ color: '#4194f0' }}>EP</th>
-                    <th className="text-right pb-1.5" style={{ color: '#f97316' }}>SV</th>
-                    <th className="text-right pb-1.5" style={{ color: '#22c55e' }}>CR</th>
+                  <tr className="text-gray-400 uppercase tracking-wider border-b text-sm">
+                    <th className="text-left pb-2">Agente</th>
+                    <th className="text-right pb-2">Total</th>
+                    <th className="text-right pb-2" style={{ color: '#787486' }}>BL</th>
+                    <th className="text-right pb-2" style={{ color: '#e11d48' }}>LT</th>
+                    <th className="text-right pb-2" style={{ color: '#4194f0' }}>EP</th>
+                    <th className="text-right pb-2" style={{ color: '#f97316' }}>SV</th>
+                    <th className="text-right pb-2" style={{ color: '#22c55e' }}>CR</th>
                   </tr>
                 </thead>
                 <tbody>
                   {topAgents.map((a, i) => (
                     <tr key={a.name} className={i % 2 === 0 ? 'bg-gray-50/50' : ''}>
-                      <td className="py-1.5 text-gray-700 font-medium truncate max-w-[120px]">{a.name}</td>
-                      <td className="py-1.5 text-right text-gray-700 font-semibold">{a.total}</td>
-                      <td className="py-1.5 text-right text-gray-500">{a.backlog}</td>
-                      <td className="py-1.5 text-right text-gray-500">{a.listo}</td>
-                      <td className="py-1.5 text-right text-gray-500">{a.enProgreso}</td>
-                      <td className="py-1.5 text-right text-gray-500">{a.supervision}</td>
-                      <td className="py-1.5 text-right font-semibold" style={{ color: '#22c55e' }}>{a.cerrado}</td>
+                      <td className="py-2 text-gray-700 font-medium truncate max-w-[140px]">{a.name}</td>
+                      <td className="py-2 text-right text-gray-800 font-bold">{a.total}</td>
+                      <td className="py-2 text-right text-gray-500">{a.backlog}</td>
+                      <td className="py-2 text-right text-gray-500">{a.listo}</td>
+                      <td className="py-2 text-right text-gray-500">{a.enProgreso}</td>
+                      <td className="py-2 text-right text-gray-500">{a.supervision}</td>
+                      <td className="py-2 text-right font-bold" style={{ color: '#22c55e' }}>{a.cerrado}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             )}
           </div>
-          <p className="text-[10px] text-gray-400 mt-1">BL=Backlog · LT=Listo p/Trabajar · EP=En Progreso · SV=Supervisión · CR=Cerrado</p>
+          <p className="text-sm text-gray-400 mt-2 flex-shrink-0">BL=Backlog · LT=Listo p/Trabajar · EP=En Progreso · SV=Supervisión · CR=Cerrado</p>
         </div>
-      </div>
 
-      {/* Recent tickets + bar chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-xl card-shadow p-4" style={{ height: '320px' }}>
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-sm font-semibold text-gray-700">Tickets Recientes</h2>
-            <Link href={`/${locale}/tickets`} className="text-xs text-[#1B3A6B] font-medium hover:underline">Ver todos</Link>
+        {/* Tickets Recientes */}
+        <div className="bg-white rounded-xl card-shadow p-4 flex flex-col" style={{ height: '420px' }}>
+          <div className="flex items-center justify-between mb-2 flex-shrink-0">
+            <h2 className="text-lg font-semibold text-gray-700">Tickets Recientes</h2>
+            <Link href={`/${locale}/tickets`} className="text-sm text-[#1B3A6B] font-medium hover:underline">Ver todos</Link>
           </div>
           {recent.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-4">Sin tickets en este período</p>
           ) : (
-            <div className="overflow-y-auto space-y-1" style={{ maxHeight: 240 }}>
+            <div className="flex-1 overflow-y-auto min-h-0 space-y-1">
               {recent.map((ticket, i) => (
                 <Link
                   key={ticket.id}
                   href={`/${locale}/tickets/${ticket.id}`}
                   className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-50 transition-colors group"
                 >
-                  <div className="w-5 h-5 rounded-full bg-[#1B3A6B]/10 flex items-center justify-center flex-shrink-0">
-                    <span className="text-[10px] font-semibold text-[#1B3A6B]">{i + 1}</span>
+                  <div className="w-7 h-7 rounded-full bg-[#1B3A6B]/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-semibold text-[#1B3A6B]">{i + 1}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-gray-800 truncate group-hover:text-[#1B3A6B]">{ticket.title}</p>
-                    <p className="text-[10px] text-gray-400">#{ticket.ticketNumber}</p>
+                    <p className="text-sm font-medium text-gray-800 truncate group-hover:text-[#1B3A6B]">{ticket.title}</p>
+                    <p className="text-xs text-gray-400">#{ticket.ticketNumber}</p>
                   </div>
-                  <span className={`flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded-full font-medium ${statusBadge[ticket.status] ?? 'bg-gray-100 text-gray-500'}`}>
+                  <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${statusBadge[ticket.status] ?? 'bg-gray-100 text-gray-500'}`}>
                     {statusLabel[ticket.status] ?? ticket.status}
                   </span>
                 </Link>
@@ -295,21 +302,36 @@ export default async function DashboardPage({
           )}
         </div>
 
-        <div className="bg-white rounded-xl card-shadow p-4 md:h-[320px]">
-          <div className="mb-1">
-            <h2 className="text-sm font-semibold text-gray-700">Comparación de Tickets</h2>
-            <p className="text-xs text-gray-400 mb-2">Distribución por estado — últimos 6 meses</p>
-            <div className="grid grid-cols-3 gap-x-3 gap-y-1 text-xs text-gray-400 mb-2">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block flex-shrink-0" style={{background:'#6366f1'}} />Creados</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block flex-shrink-0" style={{background:'#787486'}} />Backlog</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block flex-shrink-0" style={{background:'#e11d48'}} />Listo p/T.</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block flex-shrink-0" style={{background:'#4194f0'}} />En Progreso</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block flex-shrink-0" style={{background:'#f97316'}} />Supervisión</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm inline-block flex-shrink-0" style={{background:'#22c55e'}} />Cerrados</span>
+        {/* Comparación de Tickets */}
+        <div className="bg-white rounded-xl card-shadow p-4 flex flex-col" style={{ height: '420px' }}>
+          <div className="flex-shrink-0 mb-2">
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-lg font-semibold text-gray-700">Comparación de Tickets</h2>
+              <p className="text-sm text-gray-400">Últimos 6 meses</p>
+            </div>
+            <div className="flex items-center gap-3 flex-wrap text-sm text-gray-500">
+              {[
+                { label: 'Creados',     color: '#6366f1' },
+                { label: 'Backlog',     color: '#787486' },
+                { label: 'Listo p/T.', color: '#e11d48' },
+                { label: 'En Progreso', color: '#4194f0' },
+                { label: 'Supervisión', color: '#f97316' },
+                { label: 'Cerrados',    color: '#22c55e' },
+              ].map(({ label, color }) => (
+                <span key={label} className="flex items-center gap-1 whitespace-nowrap">
+                  <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: color }} />
+                  {label}
+                </span>
+              ))}
             </div>
           </div>
-          <TicketsBarChart data={barData} />
+          <div className="flex-1 min-h-0 relative">
+            <div style={{ position: 'absolute', inset: 0 }}>
+              <TicketsBarChart data={barData} />
+            </div>
+          </div>
         </div>
+
       </div>
     </div>
   )

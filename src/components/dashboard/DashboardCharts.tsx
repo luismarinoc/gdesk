@@ -63,26 +63,28 @@ export function SatisfactionDonut({ data }: DonutProps) {
   const total = data.reduce((s, d) => s + d.value, 0)
   if (total === 0) {
     return (
-      <div className="flex items-center justify-center h-40 text-sm text-gray-400">
+      <div className="flex items-center justify-center flex-1 text-sm text-gray-400">
         Sin datos aún
       </div>
     )
   }
   return (
-    <div className="space-y-3 py-2">
+    <div className="flex flex-col gap-4 pt-2">
       {data.map((d) => {
         const pct = Math.round((d.value / total) * 100)
         const color = d.color ?? STATUS_COLORS[d.name] ?? '#9ca3af'
         return (
-          <div key={d.name} className="flex items-center gap-3">
-            <span className="text-xs text-gray-600 w-40 truncate flex-shrink-0">{d.name}</span>
-            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div key={d.name}>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-sm font-medium text-gray-700">{d.name}</span>
+              <span className="text-sm font-bold ml-3 flex-shrink-0" style={{ color }}>{pct}%</span>
+            </div>
+            <div className="w-full h-5 bg-gray-100 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all"
                 style={{ width: `${pct}%`, backgroundColor: color }}
               />
             </div>
-            <span className="text-xs font-semibold text-gray-700 w-8 text-right flex-shrink-0">{pct}%</span>
           </div>
         )
       })}
@@ -102,11 +104,11 @@ const label = (key: string) => (
 
 export function TicketsBarChart({ data }: BarProps) {
   return (
-    <ResponsiveContainer width="100%" height={250}>
+    <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top: 20, right: 4, left: -24, bottom: 0 }} barSize={25} barCategoryGap="20%" barGap={3}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-        <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+        <XAxis dataKey="month" tick={{ fontSize: 13, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 13, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
         <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
         <Bar dataKey="creados"    fill="#6366f1" radius={[4,4,0,0]} name="Creados">{label('creados')}</Bar>
         <Bar dataKey="backlog"    fill="#787486" radius={[4,4,0,0]} name="Backlog">{label('backlog')}</Bar>

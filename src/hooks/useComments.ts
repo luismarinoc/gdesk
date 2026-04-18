@@ -89,6 +89,8 @@ export function useComments(ticketId: string) {
                     name,
                     url: att.url_w_host ?? att.url ?? url,
                     mimeType: 'image/png',
+                    sizeBytes: 0,
+                    uploadedAt: new Date(),
                   })
                 }
               } catch { /* silencioso — el comentario ya se subió */ }

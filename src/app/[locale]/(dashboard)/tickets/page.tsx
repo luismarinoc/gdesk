@@ -76,6 +76,66 @@ function AssigneeFilters({ tickets }: { tickets: GDeskTicket[] }) {
   )
 }
 
+const STATUS_OPTIONS = [
+  { key: 'backlog',               label: 'Backlog',          color: '#787486', bg: '#f3f4f6' },
+  { key: 'listo_para_trabajar',   label: 'Listo p/T.',       color: '#e11d48', bg: '#ffe4e6' },
+  { key: 'en_progreso',           label: 'En Progreso',      color: '#4194f0', bg: '#dbeafe' },
+  { key: 'supervision_y_control', label: 'Supervisión',      color: '#f97316', bg: '#ffedd5' },
+  { key: 'cerrado',               label: 'Cerrado',          color: '#22c55e', bg: '#dcfce7' },
+]
+
+function StatusFilters({ tickets }: { tickets: GDeskTicket[] }) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const activeStatus = searchParams.get('status') ?? ''
+
+  function toggle(key: string) {
+    const params = new URLSearchParams(searchParams.toString())
+    if (activeStatus === key) params.delete('status')
+    else params.set('status', key)
+    router.push(`?${params.toString()}`)
+  }
+
+  const total = tickets.length
+
+  return (
+    <div className="flex items-center gap-3 flex-wrap">
+      {STATUS_OPTIONS.map(({ key, label, color, bg }) => {
+        const count = tickets.filter(t => t.status === key).length
+        if (count === 0) return null
+        const active = activeStatus === key
+        const pct = total > 0 ? Math.round((count / total) * 100) : 0
+        return (
+          <button
+            key={key}
+            onClick={() => toggle(key)}
+            className="flex items-center gap-3 px-4 py-3 rounded-2xl transition-all card-shadow"
+            style={{ backgroundColor: bg, outline: active ? `2px solid ${color}` : 'none', outlineOffset: '2px', minWidth: '170px' }}
+          >
+            <div
+              className="w-11 h-11 rounded-full flex-shrink-0 flex items-center justify-center"
+              style={{ backgroundColor: color }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <div className="text-left flex-1 min-w-0">
+              <p className="font-bold text-gray-800 text-sm truncate">{label}</p>
+              <p className="text-xs mt-0.5" style={{ color }}>{count} tickets · {pct}%</p>
+            </div>
+            {active && (
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke={color} strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+              </svg>
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 function TicketsPageInner() {
   const t = useTranslations('tickets')
   const params = useParams()
@@ -201,7 +261,10 @@ function TicketsPageInner() {
           </div>
         </div>
 
-        <AssigneeFilters tickets={ready ? byMonth : []} />
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <AssigneeFilters tickets={ready ? byMonth : []} />
+          <StatusFilters tickets={ready ? byMonth : []} />
+        </div>
 
         {error === 'NO_LIST_ASSIGNED' && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">

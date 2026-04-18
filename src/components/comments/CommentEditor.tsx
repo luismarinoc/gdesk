@@ -69,13 +69,14 @@ export function CommentEditor({ onSubmit, replyTo, placeholder }: CommentEditorP
   return (
     <div className="px-3 pt-2 pb-2">
       {/* Input area */}
-      <div className="border border-gray-200 rounded-xl bg-white overflow-hidden focus-within:border-[#1B3A6B] focus-within:ring-1 focus-within:ring-[#1B3A6B]/20 transition-all">
+      <div className="border border-gray-200 rounded-xl bg-white overflow-hidden">
         <RichTextEditor
           key={submitting ? 'reset' : (replyTo ?? 'active')}
           placeholder={placeholder ?? (replyTo ? `Respondiendo a ${replyTo}...` : 'Escribe un comentario...')}
           onChange={setContent}
           hideToolbar
-          minHeight="40px"
+          borderless
+          minHeight="80px"
         />
 
         {/* Attachments preview */}

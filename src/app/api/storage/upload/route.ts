@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
   const { data: signed } = await supabase.storage
     .from(bucket)
-    .createSignedUrl(path, 3600)
+    .createSignedUrl(path, 157_680_000) // 5 years
 
   return NextResponse.json({
     path,
