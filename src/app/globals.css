@@ -142,10 +142,6 @@
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-/* Desktop zoom — solo en pantallas anchas, sin JS */
-@media (min-width: 768px) {
-  .dashboard-root {
-    min-width: 1280px;
-    zoom: 1.25;
-  }
+.dashboard-root {
+  min-width: 1280px;
 }
