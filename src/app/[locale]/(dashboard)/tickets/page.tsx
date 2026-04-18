@@ -218,8 +218,8 @@ function TicketsPageInner() {
     <>
       {showSelector && <AdminListSelector onSelect={handleListSelect} />}
 
-      <div className="space-y-4">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex-1 min-h-0 flex flex-col gap-4">
+        <div className="flex items-center justify-between gap-4 flex-wrap flex-shrink-0">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold">{t('title')}</h1>
             {isAdmin && adminList && (
@@ -261,7 +261,7 @@ function TicketsPageInner() {
           </div>
         </div>
 
-        <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex items-start justify-between gap-4 flex-wrap flex-shrink-0">
           <AssigneeFilters tickets={ready ? byMonth : []} />
           <StatusFilters tickets={ready ? byMonth : []} />
         </div>
@@ -288,8 +288,10 @@ function TicketsPageInner() {
             </div>
           </div>
         )}
-        {error && error !== 'NO_LIST_ASSIGNED' && <p className="text-red-500">{error}</p>}
-        <TicketsTable tickets={ready ? tickets : []} loading={!ready || loading} monthFilter={month} />
+        {error && error !== 'NO_LIST_ASSIGNED' && <p className="text-red-500 flex-shrink-0">{error}</p>}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <TicketsTable tickets={ready ? tickets : []} loading={!ready || loading} monthFilter={month} />
+        </div>
       </div>
     </>
   )

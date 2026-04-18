@@ -190,7 +190,7 @@ export default async function DashboardPage({
           const circ = 2 * Math.PI * r
           const dash = circ * (pct / 100)
           return (
-          <div key={label} className="rounded-2xl card-shadow p-4 flex items-center gap-3" style={{ backgroundColor: bg }}>
+          <div key={label} className="rounded-2xl card-shadow py-3.5 px-4 flex items-center gap-3" style={{ backgroundColor: bg }}>
             {/* Ring */}
             <div className="relative flex-shrink-0 w-14 h-14 flex items-center justify-center">
               <svg width="56" height="56" className="-rotate-90">

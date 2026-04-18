@@ -42,7 +42,7 @@ export function DashboardShell({ locale, userFullName, userRole, permissions, ch
   }
 
   return (
-    <div className="dashboard-root flex min-h-screen bg-[#F7F9FB] relative">
+    <div className="dashboard-root flex h-screen bg-[#F7F9FB] relative overflow-hidden">
       {/* Mobile backdrop */}
       {isMobile && sidebarOpen && (
         <div
@@ -64,14 +64,14 @@ export function DashboardShell({ locale, userFullName, userRole, permissions, ch
         </div>
       )}
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <Header
           locale={locale}
           userFullName={userFullName}
           sidebarOpen={sidebarOpen}
           onToggleSidebar={toggleSidebar}
         />
-        <main className="flex-1 p-4 md:p-6 overflow-y-auto">
+        <main className="flex-1 flex flex-col min-h-0 p-4 md:p-6 overflow-y-auto">
           {children}
         </main>
       </div>

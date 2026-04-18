@@ -105,12 +105,12 @@ export function TicketsTable({ tickets, loading, monthFilter = 'all' }: TicketsT
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-end">
+    <div className="flex flex-col h-full gap-3">
+      <div className="flex items-center justify-end flex-shrink-0">
         <span className="text-xs text-gray-400">{filtered.length} tickets</span>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white overflow-auto" style={{ maxHeight: 'calc(100vh - 220px)' }}>
+      <div className="flex-1 min-h-0 rounded-xl border border-gray-200 bg-white overflow-auto">
         <table className="w-full text-sm">
           <thead>
             {table.getHeaderGroups().map(hg => (
