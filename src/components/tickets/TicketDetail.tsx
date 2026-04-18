@@ -233,11 +233,21 @@ export function TicketDetail({ ticket, loading }: TicketDetailProps) {
   async function handleDeleteAttachment(attId: string) {
     try {
       const res = await fetch(`/api/clickup/attachments/${attId}`, { method: 'DELETE' })
-      if (res.ok) {
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data.ok) {
         setLocalAttachments(prev => prev.filter(a => a.id !== attId))
+        if (data.alreadyGone) {
+          setUploadMsg({ ok: true, text: 'El adjunto ya no existía en ClickUp.' })
+          setTimeout(() => setUploadMsg(null), 3000)
+        }
+      } else {
+        setUploadMsg({ ok: false, text: 'No se pudo eliminar el adjunto en ClickUp.' })
+        setTimeout(() => setUploadMsg(null), 4000)
       }
-      // Si no existe (notFound: true) también lo eliminamos de la vista
-    } catch { /* silencioso */ }
+    } catch {
+      setUploadMsg({ ok: false, text: 'Error al intentar eliminar el adjunto.' })
+      setTimeout(() => setUploadMsg(null), 4000)
+    }
   }
 
   async function handleRefreshAll() {
