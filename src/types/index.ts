@@ -27,6 +27,7 @@ export type GDeskTicket = {
   timeSpent: number | null      // ms
   clickupUrl: string | null
   watchers: string[]
+  attachments: GDeskAttachment[]
 }
 
 export type GDeskComment = {
