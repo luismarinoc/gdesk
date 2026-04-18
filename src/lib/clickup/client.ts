@@ -22,6 +22,25 @@ async function clickupFetch(path: string, options: RequestInit = {}) {
   return text ? JSON.parse(text) : {}
 }
 
+async function clickupFetchFormData(path: string, formData: FormData) {
+  const token = process.env.CLICKUP_API_TOKEN
+  if (!token) throw new Error('CLICKUP_API_TOKEN not configured')
+
+  const res = await fetch(`${CLICKUP_BASE_URL}${path}`, {
+    method: 'POST',
+    headers: { Authorization: token },
+    body: formData,
+  })
+
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`ClickUp API error ${res.status}: ${text}`)
+  }
+
+  const text = await res.text()
+  return text ? JSON.parse(text) : {}
+}
+
 export const clickupClient = {
   get: (path: string) => clickupFetch(path),
   post: (path: string, body: unknown) =>
@@ -29,4 +48,5 @@ export const clickupClient = {
   put: (path: string, body: unknown) =>
     clickupFetch(path, { method: 'PUT', body: JSON.stringify(body) }),
   delete: (path: string) => clickupFetch(path, { method: 'DELETE' }),
+  postFormData: (path: string, formData: FormData) => clickupFetchFormData(path, formData),
 }
