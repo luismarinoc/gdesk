@@ -25,8 +25,8 @@ export function Sidebar({ locale, userRole, userFullName, permissions, onClose }
   const initials = userFullName
     .split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'LM'
 
-  const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(href + '/')
+  const isActive = (href: string, exact = false) =>
+    exact ? pathname === href : pathname === href || pathname.startsWith(href + '/')
 
   const subItem = (href: string, label: string) => {
     const active = isActive(href)
@@ -52,9 +52,10 @@ export function Sidebar({ locale, userRole, userFullName, permissions, onClose }
     label: string,
     hasChildren = false,
     open = false,
-    toggle?: () => void
+    toggle?: () => void,
+    exact = false
   ) => {
-    const active = isActive(href)
+    const active = isActive(href, exact)
     if (hasChildren && toggle) {
       return (
         <button
@@ -142,7 +143,7 @@ export function Sidebar({ locale, userRole, userFullName, permissions, onClose }
         )}
 
         {can('tickets') && navItem(`/${locale}/tickets`, <TicketCheck className="w-4 h-4" />, 'Gestión de Tickets')}
-        {userRole !== 'agent' && can('tickets') && navItem(`/${locale}/tickets/new`, <Ticket className="w-4 h-4" />, 'Nueva Solicitud')}
+        {userRole !== 'agent' && can('tickets') && navItem(`/${locale}/tickets/new`, <Ticket className="w-4 h-4" />, 'Nueva Solicitud', false, false, undefined, true)}
         {userRole === 'admin' && navItem(`/${locale}/users`, <Users className="w-4 h-4" />, 'Usuarios')}
         {navItem(`/${locale}/settings`, <Settings className="w-4 h-4" />, 'Configuración')}
 
